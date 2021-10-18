@@ -51,16 +51,18 @@ int main(void) {
 		Log::content_ << "================================================================================\n\n";
 		Log::print();
 
-		//Log::set_path(__DEFAULT_PATH__ + grid_file_name + "_" + date_str + "/");
-		//Tecplot::set_path(__DEFAULT_PATH__ + grid_file_name + "_" + date_str + "/"); //post
-		Log::set_path(__DEFAULT_PATH__ + grid_file_name + "_" + date_str + "_" + ms::to_string(__hMLP_BD_TYPE__) + "/");
-		Tecplot::set_path(__DEFAULT_PATH__ + grid_file_name + "_" + date_str + "_" + ms::to_string(__hMLP_BD_TYPE__) + "/"); //post
+		Log::set_path(__DEFAULT_PATH__ + grid_file_name + "_" + date_str + "/");
+		Tecplot::set_path(__DEFAULT_PATH__ + grid_file_name + "_" + date_str + "/"); //post
+		Post_AI_Data::set_path(__DEFAULT_PATH__ + grid_file_name + "_" + date_str + "/Post_AI/"); //postAI
+		//Log::set_path(__DEFAULT_PATH__ + grid_file_name + "_" + date_str + "_" + ms::to_string(__hMLP_BD_TYPE__) + "/");
+		//Tecplot::set_path(__DEFAULT_PATH__ + grid_file_name + "_" + date_str + "_" + ms::to_string(__hMLP_BD_TYPE__) + "/"); //post
 
 
 		auto grid_element = Grid_Element_Builder_::build_from_grid_file(grid_file_name);
 		Grid_ grid(std::move(grid_element));
 
 		Tecplot::post_grid(grid); //post
+		Post_AI_Data::intialize(grid); //postAI
 
 		Semi_Discrete_Equation_ semi_discrete_equation(grid);
 		auto solutions = semi_discrete_equation.calculate_initial_solutions<INITIAL_CONDITION>();
@@ -78,7 +80,7 @@ int main(void) {
 			std::exit(523);
 		}
 
-		//semi_discrete_equation.estimate_error<INITIAL_CONDITION>(solutions, __SOLVE_END_CONDITION_CONSTANT__);
+		semi_discrete_equation.estimate_error<INITIAL_CONDITION>(solutions, __SOLVE_END_CONDITION_CONSTANT__);
 
 		Log::write();
 	}

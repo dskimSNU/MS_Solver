@@ -7,7 +7,7 @@ private:
 	using This_ = Post_AI_Data;
 
 public:
-	static inline bool is_time_to_conditionally_post_ = false;
+	static inline bool post_condition_ = false;
 
 public:
 	inline static std::string path_;
@@ -40,7 +40,7 @@ public:
 
 	static void post(void);
 	
-	static void conditionally_post(void);	//Ãß°¡
+	static void conditionally_post(void);	
 
 	static void post_scatter_data(const std::vector<double>& limiting_values);
 
@@ -64,10 +64,10 @@ public:
 //template definition part
 template <size_t space_dimension>
 void Post_AI_Data::intialize(const Grid<space_dimension>& grid) {
-#ifdef POST_AI_DATA_MODE
 
-	const auto& vnode_index_to_share_cell_indexes = grid.connectivity.vnode_index_to_share_cell_indexes;
-	const auto& cell_elements = grid.elements.cell_elements;
+	//const auto& vnode_index_to_share_cell_indexes = grid.connectivity.vnode_index_to_share_cell_indexes;
+	const auto& vnode_index_to_share_cell_indexes = grid.get_vnode_index_to_share_cell_index_set_consider_pbdry();
+	const auto& cell_elements = grid.get_elements().cell_elements;
 	This_::num_data_ = cell_elements.size();
 
 	This_::vertex_share_cell_indexes_set_.reserve(num_data_);
@@ -77,9 +77,9 @@ void Post_AI_Data::intialize(const Grid<space_dimension>& grid) {
 	auto file_path = path_ + "AI_Solver_Data_1.txt";	
 
 	const auto parsed_path = ms::parse(path_, '/');
-	const auto GE_comments = parsed_path[4];
-	const auto IC_comments = parsed_path[5];
-	const auto grid_comments = ms::parse(parsed_path[7], '_');
+	const auto GE_comments = parsed_path[3];
+	const auto IC_comments = parsed_path[4];
+	const auto grid_comments = ms::parse(parsed_path[6], '_');
 
 	comment_ << "***********************************\n"
 		"***********************************\n"
@@ -165,7 +165,6 @@ void Post_AI_Data::intialize(const Grid<space_dimension>& grid) {
 		//vertex_share_cell_indexes
 		vertex_share_cell_indexes_set_.push_back(std::move(vertex_share_cell_indexes));
 	}
-#endif
 }
 
 
@@ -194,7 +193,7 @@ void Post_AI_Data::record_solution_datas(const std::vector<Euclidean_Vector<num_
 		const auto max_solution = *std::max_element(vertex_share_cell_solutions.begin(), vertex_share_cell_solutions.end());
 		const auto solution_diff = max_solution - min_solution;
 
-		if (solution_diff < 0.01)
+		if (solution_diff < 0.01)	//postAI
 			continue;
 			
 		target_cell_indexes_.push_back(i);
@@ -215,7 +214,7 @@ void Post_AI_Data::record_solution_datas(const std::vector<Euclidean_Vector<num_
 
 template <size_t num_equation, size_t space_dimension>
 void Post_AI_Data::conditionally_record_solution_datas(const std::vector<Euclidean_Vector<num_equation>>& solutions, const std::vector<Matrix<num_equation, space_dimension>>& solution_gradients) {
-	if (This_::is_time_to_conditionally_post_)
+	if (This_::post_condition_)
 		This_::record_solution_datas(solutions, solution_gradients);
 }
 
@@ -240,7 +239,7 @@ void Post_AI_Data::record_limiting_value(const size_t index, const std::array<do
 
 template <ushort num_equation>
 void Post_AI_Data::conditionally_record_limiting_value(const size_t index, const std::array<double, num_equation>& limiting_value) {
-	if (This_::is_time_to_conditionally_post_)
+	if (This_::post_condition_)
 		This_::record_limiting_value(index, limiting_value);
 }
 
@@ -249,8 +248,9 @@ void Post_AI_Data::conditionally_record_limiting_value(const size_t index, const
 
 template <size_t space_dimension>
 auto Post_AI_Data::calculate_face_share_cell_indexes_set(const Grid<space_dimension>& grid) {
-	const auto& vnode_index_to_share_cell_index_set = grid.connectivity.vnode_index_to_share_cell_index_set;
-	const auto& cell_elements = grid.elements.cell_elements;
+	//const auto& vnode_index_to_share_cell_indexes = grid.connectivity.vnode_index_to_share_cell_indexes;
+	const auto& vnode_index_to_share_cell_indexes = grid.get_vnode_index_to_share_cell_index_set_consider_pbdry();
+	const auto& cell_elements = grid.get_elements().cell_elements;
 	const auto num_cell = cell_elements.size();
 
 	//face share cell indexes set
@@ -271,14 +271,14 @@ auto Post_AI_Data::calculate_face_share_cell_indexes_set(const Grid<space_dimens
 
 			const auto num_face_vnode = face_vnode_indexes.size();
 
-			const auto& set_0 = vnode_index_to_share_cell_index_set.at(face_vnode_indexes[0]);
-			const auto& set_1 = vnode_index_to_share_cell_index_set.at(face_vnode_indexes[1]);
+			const auto& set_0 = vnode_index_to_share_cell_indexes.at(face_vnode_indexes[0]);
+			const auto& set_1 = vnode_index_to_share_cell_indexes.at(face_vnode_indexes[1]);
 			std::set_intersection(set_0.begin(), set_0.end(), set_1.begin(), set_1.end(), std::back_inserter(this_face_share_cell_indexes));
 
 			if (2 < num_face_vnode) {
 				std::vector<size_t> buffer;
 				for (size_t i = 2; i < num_face_vnode; ++i) {
-					const auto& set_i = vnode_index_to_share_cell_index_set.at(face_vnode_indexes[i]);
+					const auto& set_i = vnode_index_to_share_cell_indexes.at(face_vnode_indexes[i]);
 
 					buffer.clear();
 					std::set_intersection(this_face_share_cell_indexes.begin(), this_face_share_cell_indexes.end(), set_i.begin(), set_i.end(), std::back_inserter(buffer));
@@ -304,7 +304,7 @@ auto Post_AI_Data::calculate_face_share_cell_indexes_set(const Grid<space_dimens
 
 template <size_t space_dimension>
 auto Post_AI_Data::calculate_vertex_nodes_coordinate_string_set(const Grid<space_dimension>& grid) {
-	const auto& cell_elements = grid.elements.cell_elements;
+	const auto& cell_elements = grid.get_elements().cell_elements;
 	const auto num_cell = cell_elements.size();
 
 	std::vector<std::string> vnodes_coordinate_string_set;

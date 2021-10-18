@@ -2,12 +2,11 @@
 
 
 void Post_AI_Data::conditionally_post(void) {
-	if (This_::is_time_to_conditionally_post_)
+	if (This_::post_condition_)
 		This_::post();
 }
 
 void Post_AI_Data::post(void) {
-//#ifdef POST_AI_DATA_MODE
 
 	static size_t num_post = 1;
 	static size_t num_post_data = 1;
@@ -33,7 +32,6 @@ void Post_AI_Data::post(void) {
 		}
 	}
 	target_cell_indexes_.clear();
-//#endif
 }
 
 void Post_AI_Data::post_scatter_data(const std::vector<double>& limiting_values) {

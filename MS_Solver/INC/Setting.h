@@ -4,28 +4,28 @@
 
 // ########################################## OPTION ##################################################################
 
-#define __DEFAULT_PATH__						"D:/Code/Result/_Shocktube_test/" + GOVERNING_EQUATION::name() + "/" + INITIAL_CONDITION::name() + "/" + SPATIAL_DISCRETE_METHOD::name() + "_" + RECONSTRUCTION_METHOD::name() + "/"
+#define __DEFAULT_PATH__						"D:/CodeData/20211017/" + GOVERNING_EQUATION::name() + "/" + INITIAL_CONDITION::name() + "/" + SPATIAL_DISCRETE_METHOD::name() + "_" + RECONSTRUCTION_METHOD::name() + "/"
 #define __DIMENSION__							2
 #define __GRID_FILE_TYPE__						__GMSH__
-#define __GRID_FILE_NAMES__						Shocktube_Quad_100x10
-#define __GOVERNING_EQUATION__					__EULER__
-#define __INITIAL_CONDITION__					__SLOWLY_MOVING_CONTACT__
+#define __GRID_FILE_NAMES__						RT50
+#define __GOVERNING_EQUATION__					__LINEAR_ADVECTION__
+#define __INITIAL_CONDITION__					__SQUARE_WAVE__
 #define __SPATIAL_DISCRETE_METHOD__				__FVM__
 #define __RECONSTRUCTION_METHOD__				__MLP_u1_RECONSTRUCTION__
 #define __NUMERICAL_FLUX__						__LLF__
 #define __TIME_INTEGRAL_METHOD__				__SSPRK33__
 #define __TIME_STEP_METHOD__					__CFL__
-#define __TIME_STEP_CONSTANT__					0.6
+#define __TIME_STEP_CONSTANT__					0.9
 #define __SOLVE_END_CONDITION__					__BY_TIME__
-#define __SOLVE_END_CONDITION_CONSTANT__		0.012
+#define __SOLVE_END_CONDITION_CONSTANT__		2.0
 #define __SOLVE_POST_CONDITION__				__BY_TIME__
-#define __SOLVE_POST_CONDITION_CONSTANT__		0.001
+#define __SOLVE_POST_CONDITION_CONSTANT__		0.01
 #define __POST_ORDER__							0
 #define __POST_FILE_FORMAT__					__BINARY__
 
 // CONDITIONAL OPTIONS
 #if  __RECONSTRUCTION_METHOD__ == __ANN_RECONSTRUCTION__
-#define __ANN_MODEL__							model5_1
+#define __ANN_MODEL__							dataset3
 #endif
 
 #if		__SPATIAL_DISCRETE_METHOD__ ==	__HOM__
@@ -39,8 +39,8 @@
 // __GRID_FILE_TYPE__				__GMSH__
 // __GOVERNING_EQUATION__			__LINEAR_ADVECTION__, __BURGERS__, __EULER__
 // __INITIAL_CONDITION__			__SINE_WAVE__, __SQUARE_WAVE__, __CIRCLE_WAVE__, __GAUSSIAN_WAVE__, __CONSTANT1__,
-//									__SOD__, __MODIFIED_SOD__, __SUPERSONIC_EXPANSION__, __BLAST_WAVE_PROBLEM__, __DOUBLE_STRONG_SHOCK_PROBLEM__, __SLOWLY_MOVING_CONTACT__
-//									__SHU_OSHER__, __EXPLOSION_PROBLEM__, __DOUBLE_RAREFACTION_WAVE__, __SHU_OSHER__, __HARTEN_LAX_PROBLEM__
+//									__MODIFIED_SOD__, __SUPERSONIC_EXPANSION__, __BLAST_WAVE_PROBLEM__, __DOUBLE_STRONG_SHOCK_PROBLEM__, __SLOWLY_MOVING_CONTACT__
+//									__SOD__, __HARTEN_LAX_PROBLEM__,  __SHU_OSHER__, __EXPLOSION_PROBLEM__, __DOUBLE_RAREFACTION_WAVE__
 // __SPATIAL_DISCRETE_METHOD__		__FVM__, __HOM__
 // __RECONSTRUCTION_METHOD__		__CONSTANT_RECONSTRUCTION__, __LINEAR_RECONSTRUCTION__,  __MLP_u1_RECONSTRUCTION__, __ANN_RECONSTRUCTION__
 //									__POLYNOMIAL_RECONSTRUCTION__, __hMLP_RECONSTRUCTION__, __hMLP_BD_RECONSTRUCTION__
@@ -54,7 +54,7 @@
 // Reference Constant
 // CFL		: Modified SOD(0.9), Supersonic Expansion(0.5), Blast wave problem(0.6), Double strong shock problem(0.8), Slowly-moving contact(0.6)
 // END TIME : Modified SOD(0.2), Supersonic Expansion(0.15), Blast wave problem(0.012), Double strong shock problem(0.035), Slowly-moving contact(0.012)
-//			  Double Rarefaction Wave & Harten Lax(0.15), Shu_Osher(0.178), 
+//			  Harten Lax(0.15) & Double Rarefaction Wave, Shu_Osher(0.178), 
 
 // ######################################### OPTION END ################################################################
 
@@ -66,7 +66,7 @@
 
 // Linear Advection
 #define X_ADVECTION_SPEED				1.0
-#define Y_ADVECTION_SPEED				1.0
+#define Y_ADVECTION_SPEED				0.5
 #define Z_ADVECTION_SPEED				1.0
 
 // Sine Wave

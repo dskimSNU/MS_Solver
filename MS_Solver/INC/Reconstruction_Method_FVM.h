@@ -86,6 +86,7 @@ public:
 
 public:
     void reconstruct(const std::vector<Solution_>& solutions);
+    void characteristic_reconstruct(const std::vector<Solution_>& solutions); // ds
     const std::vector<Solution_Gradient_>& get_solution_gradients(void) const { return this->solution_gradients_; };
 
 protected:
@@ -180,6 +181,10 @@ void Linear_Reconstruction<Gradient_Method>::reconstruct(const std::vector<Solut
     this->solution_gradients_ = this->gradient_method_.calculate_solution_gradients(solutions);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////MLP-u1 limiter/////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 template <typename Gradient_Method>
 MLP_u1<Gradient_Method>::MLP_u1(const Grid<space_dimension_>& grid) : gradient_method_(grid), vnode_index_to_share_cell_index_set_(grid.get_vnode_index_to_share_cell_index_set_consider_pbdry()) {
     SET_TIME_POINT;
@@ -200,6 +205,8 @@ void MLP_u1<Gradient_Method>::reconstruct(const std::vector<Solution_>& solution
     const auto solution_gradients = this->gradient_method_.calculate_solution_gradients(solutions);
     const auto vnode_index_to_min_max_solution = this->calculate_vertex_node_index_to_min_max_solution(solutions);
 
+    Post_AI_Data::conditionally_record_solution_datas(solutions, solution_gradients);//postAI
+
     for (uint i = 0; i < solutions.size(); ++i) {
         const auto& gradient = solution_gradients[i];
         const auto P1_mode_solution_vnodes = gradient * this->center_to_vertex_matrixes_[i];
@@ -218,10 +225,64 @@ void MLP_u1<Gradient_Method>::reconstruct(const std::vector<Solution_>& solution
                 limiting_values[e] = (std::min)(limiting_values[e], limiting_value);
             }
         }
-                
+        Post_AI_Data::conditionally_record_limiting_value(i, limiting_values); //postAI
+
         const Matrix limiting_value_matrix = limiting_values;
         this->solution_gradients_[i] = limiting_value_matrix * gradient;
     }
+    //Tecplot::conditionally_post_solution(solutions); //post
+    Post_AI_Data::conditionally_post(); //postAI
+};
+
+template <typename Gradient_Method>
+void MLP_u1<Gradient_Method>::characteristic_reconstruct(const std::vector<Solution_>& solutions) {
+    const auto solution_gradients = this->gradient_method_.calculate_solution_gradients(solutions);
+
+    const auto num_cells = solutions.size();
+    const auto num_equations = solutions[0].size();
+    const double gamma = 1.4;
+
+    std::vector<Matrix<num_equations, num_equations>> set_of_K_matrices(num_cells_); //right eigenvectors
+    for (int i = 0; i < num_cells_; i++) {
+        const auto rho = solutions[i][0];
+        const auto u = solutions[i][1] / solutions[i][0];
+        const auto v = solutions[i][2] / solutions[i][0];
+        const auto e = solutions[i][3] / solutions[i][0];
+        const auto p = e * (gamma - 1.0) * rho;
+        const auto H = 0.5 * (u * u + v * v) + e + p / rho;
+
+        std::vector<double> K1 = { 1.0, u - a, v, H - a * u };
+        std::vector<double> K2 = { 1.0, u, v, 0.5 * (u * u + v * v) };
+        std::vector<double> K3 = { 0.0, 0.0, 1.0, v };
+        std::vector<double> K4 = { 1.0, u + a, v, H + u * a };
+
+    }
+
+    const auto vnode_index_to_min_max_solution = this->calculate_vertex_node_index_to_min_max_solution(solutions);
+
+    for (uint i = 0; i < solutions.size(); ++i) {
+        const auto& gradient = solution_gradients[i];
+        const auto P1_mode_solution_vnodes = gradient * this->center_to_vertex_matrixes_[i];
+
+        std::array<double, num_equation_> limiting_values;
+        limiting_values.fill(1);
+
+        const auto& vnode_indexes = this->set_of_vnode_indexes_[i];
+        const auto num_vertex = vnode_indexes.size();
+
+        for (ushort j = 0; j < num_vertex; ++j) {
+            const auto& [min_solution, max_solution] = vnode_index_to_min_max_solution.at(vnode_indexes[j]);
+
+            for (ushort e = 0; e < num_equation_; ++e) {
+                const auto limiting_value = MLP_u1_Limiting_Strategy::limiter_function(P1_mode_solution_vnodes.at(e, j), solutions[i].at(e), min_solution.at(e), max_solution.at(e));
+                limiting_values[e] = (std::min)(limiting_values[e], limiting_value);
+            }
+        }
+
+        const Matrix limiting_value_matrix = limiting_values;
+        this->solution_gradients_[i] = limiting_value_matrix * gradient;
+    }
+
 };
 
 
@@ -242,6 +303,10 @@ auto MLP_u1<Gradient_Method>::calculate_vertex_node_index_to_min_max_solution(co
 
     return vnode_index_to_min_max_solution;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////ANN-based limiter////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 template <typename Gradient_Method>
 ANN_limiter<Gradient_Method>::ANN_limiter(const Grid<space_dimension_>& grid) :gradient_method_(grid) {
@@ -314,6 +379,7 @@ double ANN_limiter<Gradient_Method>::limit(Dynamic_Euclidean_Vector& feature) co
     static const auto num_layer = model.weights.size();
     static const ReLU activation_function;
     static const Sigmoid output_function;
+    //static const HardTanh output_function;
 
     //hidden layer
     for (ushort i = 0; i < num_layer - 1; ++i) {

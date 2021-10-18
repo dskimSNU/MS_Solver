@@ -33,6 +33,8 @@ public:
 	Grid(Grid_Elements<space_dimension>&& grid_elements);
 
 public:
+	const Grid_Elements<space_dimension>& get_elements(void) const { return this->elements; };
+	const std::unordered_map<uint, std::set<uint>>& get_vnode_index_to_share_cell_index_set_ignore_pbdry(void) const { return this->vnode_index_to_share_cell_index_set_ignore_pbdry_; };
 	const std::unordered_map<uint, std::set<uint>>& get_vnode_index_to_share_cell_index_set_consider_pbdry(void) const { return this->vnode_index_to_share_cell_index_set_consider_pbdry_; };
 
 public:

@@ -101,7 +101,7 @@ void Cells_FVM<Governing_Equation>::estimate_error(const std::vector<Euclidean_V
     const auto num_cell = computed_solutions.size();
 
     for (size_t i = 0; i < num_cell; ++i) {
-        const auto local_diff = (exact_solutions[i] - computed_solutions[i]).L1_norm();
+        const auto local_diff = (exact_solutions[i] - computed_solutions[i]).L2_norm();
         const auto local_L1_error = local_diff;
         arithmetic_mean_L1_error += local_L1_error;
     }
