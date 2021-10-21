@@ -4,20 +4,20 @@
 
 // ########################################## OPTION ##################################################################
 
-#define __DEFAULT_PATH__						"D:/CodeData/20211021/" + GOVERNING_EQUATION::name() + "/" + INITIAL_CONDITION::name() + "/" + SPATIAL_DISCRETE_METHOD::name() + "_" + RECONSTRUCTION_METHOD::name() + "/"
+#define __DEFAULT_PATH__						"D:/CodeData/model test_20211021/" + GOVERNING_EQUATION::name() + "/" + INITIAL_CONDITION::name() + "/" + SPATIAL_DISCRETE_METHOD::name() + "_" + RECONSTRUCTION_METHOD::name() + "/"
 #define __DIMENSION__							2
 #define __GRID_FILE_TYPE__						__GMSH__
-#define __GRID_FILE_NAMES__						RQ50
-#define __GOVERNING_EQUATION__					__LINEAR_ADVECTION__
-#define __INITIAL_CONDITION__					__SQUARE_WAVE__
+#define __GRID_FILE_NAMES__						Shocktube_Quad_100x10
+#define __GOVERNING_EQUATION__					__EULER__
+#define __INITIAL_CONDITION__					__MODIFIED_SOD__
 #define __SPATIAL_DISCRETE_METHOD__				__FVM__
-#define __RECONSTRUCTION_METHOD__				__MLP_u1_RECONSTRUCTION__
+#define __RECONSTRUCTION_METHOD__				__ANN_RECONSTRUCTION__
 #define __NUMERICAL_FLUX__						__LLF__
 #define __TIME_INTEGRAL_METHOD__				__SSPRK33__
 #define __TIME_STEP_METHOD__					__CFL__
 #define __TIME_STEP_CONSTANT__					0.9
 #define __SOLVE_END_CONDITION__					__BY_TIME__
-#define __SOLVE_END_CONDITION_CONSTANT__		2.0
+#define __SOLVE_END_CONDITION_CONSTANT__		0.2
 #define __SOLVE_POST_CONDITION__				__BY_TIME__
 #define __SOLVE_POST_CONDITION_CONSTANT__		0.01
 #define __POST_ORDER__							0
@@ -25,7 +25,7 @@
 
 // CONDITIONAL OPTIONS
 #if  __RECONSTRUCTION_METHOD__ == __ANN_RECONSTRUCTION__
-#define __ANN_MODEL__							dataset3
+#define __ANN_MODEL__							linear_burgers_20211021
 #endif
 
 #if		__SPATIAL_DISCRETE_METHOD__ ==	__HOM__
@@ -189,6 +189,8 @@
 #define RECONSTRUCTION_METHOD Constant_Reconstruction 
 #endif
 #if		__RECONSTRUCTION_METHOD__ == __LINEAR_RECONSTRUCTION__
+
+
 #define RECONSTRUCTION_METHOD Linear_Reconstruction<GRADIENT_METHOD>
 #endif
 #if		__RECONSTRUCTION_METHOD__ == __MLP_u1_RECONSTRUCTION__

@@ -148,7 +148,6 @@ private:
     std::vector<std::vector<uint>> set_of_indexes_;
     std::vector<double> chracteristic_length_;
     std::vector<Solution_> primitive_variables_;
-    std::vector<Solution_> characteristic_variables_;
 
 public:
     ANN_limiter(const Grid<space_dimension_>& grid);
@@ -156,6 +155,7 @@ public:
 public:
     void reconstruct(const std::vector<Solution_>& solutions);    
     const std::vector<Solution_Gradient_>& get_solution_gradients(void) const { return solution_gradients_; };
+    std::vector<Solution_> get_primitive_variables() const { return this->primitive_variables_; };
 
 private:
     std::vector<double> normalize (const std::vector<double>& input_values); //ds
@@ -330,7 +330,6 @@ ANN_limiter<Gradient_Method>::ANN_limiter(const Grid<space_dimension_>& grid) :g
         this->chracteristic_length_[i] = std::pow(cell_volumes[i], 1.0 / space_dimension_);
 
     this->primitive_variables_.resize(num_cell); //primitive variables
-    this->characteristic_variables_(num_cell);   //conservative variables
 }
 
 template <typename Gradient_Method>
@@ -339,7 +338,7 @@ void ANN_limiter<Gradient_Method>::reconstruct(const std::vector<Solution_>& sol
     if constexpr(Solution_::dimension() == 1)
         this->solution_gradients_ = this->gradient_method_.calculate_solution_gradients(solutions);            //1. conservative variables
 
-    else if constexpr (Solution_""dimension() == 4) {
+    else if constexpr (Solution_::dimension() == 4) {
         for (int i = 0; i < solutions.size(); i++)
             primitive_variables_[i] = ds::conservative_to_primitive(solutions[i]); //primitive variables
             this->solution_gradients_ = this->gradient_method_.calculate_solution_gradients(primitive_variables_); //2. primitive variables
@@ -386,8 +385,10 @@ void ANN_limiter<Gradient_Method>::reconstruct(const std::vector<Solution_>& sol
                 input_values[solution_gradient_y_start_index + k] = solution_gradient.at(j, 1) * this->chracteristic_length_[i];
             }
 
-            std::vector<double> normalized_input_values = this->normalize(input_values); //normalization
-            Dynamic_Euclidean_Vector input = std::move(normalized_input_values);
+            //std::vector<double> normalized_input_values = this->normalize(input_values); //normalization
+            //Dynamic_Euclidean_Vector input = std::move(normalized_input_values);
+            Dynamic_Euclidean_Vector input = std::move(input_values);
+
             limiting_values[j] = this->limit(input);
         }
 
@@ -402,7 +403,6 @@ template <typename Gradient_Method>
 std::vector<double> ANN_limiter<Gradient_Method>::normalize(const std::vector<double>& feature) {
     const int num_feature = feature.size();
     const int num_avg_feature = num_feature / 3; // 3 types of feature : [avg, grad_x, grad_y]
-
     const double avg_max = *max_element(feature.begin(), feature.begin() + num_avg_feature - 1);
     const double avg_min = *min_element(feature.begin(), feature.begin() + num_avg_feature - 1);
     const double grad_max = *max_element(feature.begin() + num_avg_feature, feature.end());
@@ -416,6 +416,7 @@ std::vector<double> ANN_limiter<Gradient_Method>::normalize(const std::vector<do
         normalized_feature[i] = (feature[i] - avg_min) / (avg_max - avg_min);
     for(int i = num_avg_feature; i < num_feature; i++)
         normalized_feature[i] = (feature[i] - grad_min) / (grad_max - grad_min);
+
     return normalized_feature;
 }
 

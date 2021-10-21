@@ -106,9 +106,9 @@ Inner_Faces_FVM_Linear<Reconstruction_Method, Numerical_Flux_Function>::Inner_Fa
 template<typename Reconstruction_Method, typename Numerical_Flux_Function>
 void Inner_Faces_FVM_Linear<Reconstruction_Method, Numerical_Flux_Function>::calculate_RHS(std::vector<Residual_>& RHS, const std::vector<Solution_>& solutions) const {
     const auto& solution_gradients = this->reconstruction_method_.get_solution_gradients();
-    const auto& K_matrices = this->reconstruction_method_.get_K_matrices();
     const auto& primitive_variables = this->reconstruction_method_.get_primitive_variables();
-    const auto& characteristic_variables = this->reconstruction_method_.get_characteristic_variables();
+    //const auto& K_matrices = this->reconstruction_method_.get_K_matrices();
+    //const auto& characteristic_variables = this->reconstruction_method_.get_characteristic_variables();
 
     const auto num_inner_face = this->normals_.size();
     for (size_t i = 0; i < num_inner_face; ++i) {
