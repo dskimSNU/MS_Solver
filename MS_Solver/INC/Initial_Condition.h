@@ -128,6 +128,28 @@ public:
     static constexpr ushort space_dimension(void);
 };
 
+template <ushort space_dimension_>
+class Big_Square_Wave : public IC
+{
+private:
+    Big_Square_Wave(void) = delete;
+
+private:
+    static constexpr ushort num_eqation_ = 1;
+
+    using This_ = Big_Square_Wave<space_dimension_>;
+    using Space_Vector_ = Euclidean_Vector<space_dimension_>;
+    using Solution_ = Euclidean_Vector<num_eqation_>;
+
+public:
+    static Euclidean_Vector<1> calculate_solution(const Space_Vector_& space_vector);
+    static std::vector<Euclidean_Vector<1>> calculate_solutions(const std::vector<Space_Vector_>& cell_centers);
+
+public:
+    static std::string name(void);
+    static constexpr ushort space_dimension(void);
+};
+
 
 template <ushort space_dimension_>
 class SOD : public IC 
@@ -539,6 +561,36 @@ std::string Gaussian_Wave<space_dimension_>::name(void) {
 
 template <ushort space_dimension_>
 constexpr ushort Gaussian_Wave<space_dimension_>::space_dimension(void) {
+    return space_dimension_;
+}
+
+//Square wave
+template <ushort space_dimension_>
+Euclidean_Vector<1> Big_Square_Wave<space_dimension_>::calculate_solution(const Space_Vector_& space_vector) {
+    if (space_vector[0] < 0.25 || 0.75 < space_vector[0])
+        return { 0 };
+    
+    return { 1 };    
+}
+
+template <ushort space_dimension_>
+std::vector<Euclidean_Vector<1>> Big_Square_Wave<space_dimension_>::calculate_solutions(const std::vector<Space_Vector_>& cell_centers) {
+    const auto num_cell = cell_centers.size();
+    std::vector<Solution_> solutions(num_cell);
+
+    for (size_t i = 0; i < num_cell; ++i)
+        solutions[i] = This_::calculate_solution(cell_centers[i]);
+
+    return solutions;
+}
+
+template <ushort space_dimension_>
+std::string Big_Square_Wave<space_dimension_>::name(void) {
+    return "Big_Square_Wave";
+};
+
+template <ushort space_dimension_>
+constexpr ushort Big_Square_Wave<space_dimension_>::space_dimension(void) {
     return space_dimension_;
 }
 

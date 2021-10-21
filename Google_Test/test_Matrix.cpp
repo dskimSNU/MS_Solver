@@ -17,6 +17,17 @@ TEST(Matrix, construct_diagonal_matrix_2) {
 	EXPECT_EQ(result, ref);
 }
 
+TEST(Matrix, inverse_1) {
+	Matrix<2,2> m = { 1,2,3,4 };
+	m.be_inverse();
+
+	Matrix<2, 2> ref = { -2,1,1.5,-0.5 };
+
+	for (int i = 0; i < 2; ++i)
+		for (int j = 0; j < 2; ++j)
+			EXPECT_DOUBLE_EQ(m.at(i, j), ref.at(i, j));
+}
+
 
 TEST(Matrix, operator_plus_1) {
 	std::array<double, 16> ar;

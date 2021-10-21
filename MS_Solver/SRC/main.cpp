@@ -1,6 +1,5 @@
 #include "../INC/Initial_Condition.h"
 #include "../INC/Discrete_Equation.h"
-
 #include "../INC/Setting.h"
 
 namespace ms {
@@ -53,7 +52,7 @@ int main(void) {
 
 		Log::set_path(__DEFAULT_PATH__ + grid_file_name + "_" + date_str + "/");
 		Tecplot::set_path(__DEFAULT_PATH__ + grid_file_name + "_" + date_str + "/"); //post
-		Post_AI_Data::set_path(__DEFAULT_PATH__ + grid_file_name + "_" + date_str + "/Post_AI/"); //postAI
+		//Post_AI_Data::set_path(__DEFAULT_PATH__ + grid_file_name + "_" + date_str + "/Post_AI/"); //postAI
 		//Log::set_path(__DEFAULT_PATH__ + grid_file_name + "_" + date_str + "_" + ms::to_string(__hMLP_BD_TYPE__) + "/");
 		//Tecplot::set_path(__DEFAULT_PATH__ + grid_file_name + "_" + date_str + "_" + ms::to_string(__hMLP_BD_TYPE__) + "/"); //post
 
@@ -62,7 +61,7 @@ int main(void) {
 		Grid_ grid(std::move(grid_element));
 
 		Tecplot::post_grid(grid); //post
-		Post_AI_Data::intialize(grid); //postAI
+		//Post_AI_Data::intialize(grid); //postAI
 
 		Semi_Discrete_Equation_ semi_discrete_equation(grid);
 		auto solutions = semi_discrete_equation.calculate_initial_solutions<INITIAL_CONDITION>();

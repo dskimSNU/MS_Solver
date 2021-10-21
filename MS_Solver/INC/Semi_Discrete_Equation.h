@@ -97,7 +97,7 @@ public:
         Log::print();
     }
 
-    void reconstruct(std::vector<Discretized_Solution_>& solutions) {
+    void reconstruct(std::vector<Discretized_Solution_>& solutions) {  
         if constexpr (!ms::is_default_reconstruction<Spatial_Discrete_Method, Reconstruction_Method>)
             this->reconstruction_method_.reconstruct(solutions);
 
@@ -105,5 +105,4 @@ public:
         if constexpr (scailing_method_flag && ms::can_use_scaliling_method<Governing_Equation, Spatial_Discrete_Method>)
             Solution_Scaler<space_dimension_>::inspect_and_scale(solutions);
     }
-
 };

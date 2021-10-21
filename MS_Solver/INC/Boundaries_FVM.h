@@ -110,25 +110,39 @@ Boundaries_FVM_Linear<Reconstruction_Method, Numerical_Flux_Function>::Boundarie
 template <typename Reconstruction_Method, typename Numerical_Flux_Function>
 void Boundaries_FVM_Linear<Reconstruction_Method, Numerical_Flux_Function>::calculate_RHS(std::vector<Boundary_Flux_>& RHS, const std::vector<Solution_>& solutions) const {
     const auto& solution_gradients = this->reconstruction_method_.get_solution_gradients();
+    const auto& K_matrices = this->reconstruction_method_.get_K_matrices();
+    const auto& primitive_variables = this->reconstruction_method_.get_primitive_variables();
+    const auto& characteristic_variables = this->reconstruction_method_.get_characteristic_variables();
 
     const auto num_boundary = this->normals_.size();
-
     for (size_t i = 0; i < num_boundary; ++i) {
         const auto& boundary_flux_function = this->boundary_flux_functions_.at(i);
         const auto& normal = this->normals_.at(i);
-
         const auto oc_index = this->oc_indexes_.at(i);
 
-        const auto& oc_solution = solutions[oc_index];
+        Solution_ oc_solution;
+        //For 2D SCL
+        if constexpr(Solution_::dimension() == 1)
+            oc_solution = solutions[oc_index]; //conservative variables
+
+        //For 2D Euler
+        else if constexpr(Solution_::dimension() == 4) {
+            oc_solution = primitive_variables[oc_index]; //primitive varialbes
+            //oc_solution = characteristic_variables[oc_index]; //characteristic variables
+        }
+
         const auto& oc_solution_gradient = solution_gradients[oc_index];
         const auto& oc_to_face_vector = this->oc_to_boundary_vectors_[i];
 
-        const auto oc_side_solution = oc_solution + oc_solution_gradient * oc_to_face_vector;
+        auto oc_side_solution = oc_solution + oc_solution_gradient * oc_to_face_vector;
+
+        if constexpr(Solution_::dimension() == 4) {
+            oc_side_solution = ds::primitive_to_conservative(oc_side_solution); //primitive to conservative
+            //oc_side_solution = K_matrices.at(oc_index) * oc_side_solution; //characteristic to conservative
+        }
 
         const auto boundary_flux = boundary_flux_function->calculate(oc_side_solution, normal);
-
         const auto delta_RHS = this->volumes_[i] * boundary_flux;
-
         RHS[oc_index] -= delta_RHS;
     }
 }

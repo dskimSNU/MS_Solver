@@ -6,7 +6,7 @@ class Least_Square_Base
 {
 private:    
     using Solution_             = Euclidean_Vector<num_equation_>;
-    using Solution_gradinet_    = Matrix<num_equation_, space_dimension_>;
+    using Solution_gradient_    = Matrix<num_equation_, space_dimension_>;
 
 protected:
     std::vector<std::vector<uint>> set_of_near_cell_indexes_;
@@ -16,7 +16,7 @@ protected:
     std::vector<Ghost_Cell<space_dimension_>> ghost_cells_;
 
 public:
-    std::vector<Solution_gradinet_> calculate_solution_gradients(const std::vector<Solution_>& solutions) const;
+    std::vector<Solution_gradient_> calculate_solution_gradients(const std::vector<Solution_>& solutions) const;
 
 private:
     std::vector<Dynamic_Matrix> calculate_solution_delta_matrixes(const std::vector<Solution_>& solutions) const;
@@ -52,7 +52,7 @@ public:
 template <ushort num_equation_, ushort space_dimension_>
 std::vector<Matrix<num_equation_, space_dimension_>> Least_Square_Base<num_equation_, space_dimension_>::calculate_solution_gradients(const std::vector<Solution_>& solutions)  const {
     const auto num_solution = solutions.size();
-    std::vector<Solution_gradinet_> solution_gradients(num_solution);
+    std::vector<Solution_gradient_> solution_gradients(num_solution);
 
     const auto solution_delta_matrixes = this->calculate_solution_delta_matrixes(solutions);
     for (size_t i = 0; i < num_solution; ++i)

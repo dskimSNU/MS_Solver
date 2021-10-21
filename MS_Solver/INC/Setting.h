@@ -4,10 +4,10 @@
 
 // ########################################## OPTION ##################################################################
 
-#define __DEFAULT_PATH__						"D:/CodeData/20211017/" + GOVERNING_EQUATION::name() + "/" + INITIAL_CONDITION::name() + "/" + SPATIAL_DISCRETE_METHOD::name() + "_" + RECONSTRUCTION_METHOD::name() + "/"
+#define __DEFAULT_PATH__						"D:/CodeData/20211021/" + GOVERNING_EQUATION::name() + "/" + INITIAL_CONDITION::name() + "/" + SPATIAL_DISCRETE_METHOD::name() + "_" + RECONSTRUCTION_METHOD::name() + "/"
 #define __DIMENSION__							2
 #define __GRID_FILE_TYPE__						__GMSH__
-#define __GRID_FILE_NAMES__						RT50
+#define __GRID_FILE_NAMES__						RQ50
 #define __GOVERNING_EQUATION__					__LINEAR_ADVECTION__
 #define __INITIAL_CONDITION__					__SQUARE_WAVE__
 #define __SPATIAL_DISCRETE_METHOD__				__FVM__
@@ -38,7 +38,7 @@
 // AVAILABLE OPTIONS
 // __GRID_FILE_TYPE__				__GMSH__
 // __GOVERNING_EQUATION__			__LINEAR_ADVECTION__, __BURGERS__, __EULER__
-// __INITIAL_CONDITION__			__SINE_WAVE__, __SQUARE_WAVE__, __CIRCLE_WAVE__, __GAUSSIAN_WAVE__, __CONSTANT1__,
+// __INITIAL_CONDITION__			__SQUARE_WAVE__, __SINE_WAVE__, __CIRCLE_WAVE__, __GAUSSIAN_WAVE__, __CONSTANT1__, __BIG_SQAURE_WAVE__
 //									__MODIFIED_SOD__, __SUPERSONIC_EXPANSION__, __BLAST_WAVE_PROBLEM__, __DOUBLE_STRONG_SHOCK_PROBLEM__, __SLOWLY_MOVING_CONTACT__
 //									__SOD__, __HARTEN_LAX_PROBLEM__,  __SHU_OSHER__, __EXPLOSION_PROBLEM__, __DOUBLE_RAREFACTION_WAVE__
 // __SPATIAL_DISCRETE_METHOD__		__FVM__, __HOM__
@@ -127,6 +127,9 @@
 #endif
 #if		__INITIAL_CONDITION__ == __CONSTANT1__
 #define INITIAL_CONDITION	Constant1<__DIMENSION__>
+#endif
+#if		__INITIAL_CONDITION__ == __BIG_SQUARE_WAVE__
+#define INITIAL_CONDITION	Big_Square_Wave<__DIMENSION__>
 #endif
 #if		__INITIAL_CONDITION__ == __SOD__
 #define INITIAL_CONDITION	SOD<__DIMENSION__>

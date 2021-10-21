@@ -22,12 +22,11 @@ public:
         Log::content_ << "\t\t\t\t Solving\n";
         Log::content_ << "================================================================================\n";
                 
-
-        Tecplot::post_solution(solutions, "initial");//post
-        Tecplot::post_condition_ = true;
-        Post_AI_Data::post_condition_ = true;//postAI
+        //Tecplot::post_solution(solutions, "initial");//post
+        Tecplot::post_condition_ = true;//post
+        //Post_AI_Data::post_condition_ = true;//postAI
         semi_discrete_equation.reconstruct(solutions);
-      
+
         SET_TIME_POINT;
         while (true) {
             if (Solve_Controller::is_time_to_end(current_time)) {
@@ -36,8 +35,8 @@ public:
             }                      
 
             if (Solve_Controller::is_time_to_post(current_time)) {
-                Tecplot::post_solution(solutions);//post
-               //Tecplot::post_condition_ = true;
+                //Tecplot::post_solution(solutions);//post
+                Tecplot::post_condition_ = true;//post
             }
            
             SET_TIME_POINT;

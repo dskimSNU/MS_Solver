@@ -49,6 +49,27 @@ public:
 	bool operator==(const Matrix & A) const;
 
 public:
+	Matrix& be_inverse(void) {
+		static_require(num_row == num_column, "invertable matrix should be square matrix");
+
+		const auto ipiv = this->PLU_decomposition();
+
+		const int matrix_layout = LAPACK_ROW_MAJOR;
+		const lapack_int n = static_cast<int>(num_row);
+		const lapack_int lda = n;
+		const lapack_int info = LAPACKE_dgetri(matrix_layout, n, this->values_.data(), lda, ipiv.data());
+
+		dynamic_require(info == 0, "info should be 0 when success matrix inverse");
+		//info > 0 "U is singular matrix in L-U decomposition"
+		//info < 0 "fail to inverse the matrix"
+
+		return *this;
+	}
+	Matrix inverse(void) const {
+		auto result = *this;
+		return result.be_inverse();
+	}
+
 	void change_columns(const size_t column_index, const Dynamic_Matrix& A);
 
 	template <size_t num_other_column>
@@ -61,6 +82,17 @@ public:
 
 private:
 	double& value_at(const size_t row_index, const size_t column_index);
+	std::vector<int> PLU_decomposition(void) {
+		const int matrix_layout = LAPACK_ROW_MAJOR;
+		const lapack_int m = static_cast<int>(num_row);
+		const lapack_int n = static_cast<int>(num_column);
+		const lapack_int lda = n;
+		std::vector<int> ipiv(std::min(m, n));
+		lapack_int info = LAPACKE_dgetrf(matrix_layout, m, n, this->values_.data(), lda, ipiv.data());
+
+		dynamic_require(0 <= info, "info should be greater than 0 when sucess PLU decomposition");
+		return ipiv;
+	};
 };
 
 template <size_t matrix_order>
