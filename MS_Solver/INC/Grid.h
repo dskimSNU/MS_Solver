@@ -136,9 +136,10 @@ Euclidean_Vector<num_equation> Ghost_Cell<space_dimension>::solution(const Eucli
 	switch (this->related_type)
 	{
 	case ElementType::periodic:
-	case ElementType::supersonic_outlet: return related_cell_solution;
-	case ElementType::supersonic_inlet1: return Supersonic_Inlet1_Neighbor_Solution<num_equation>::calculate();
-	case ElementType::supersonic_inlet2: return Supersonic_Inlet2_Neighbor_Solution<num_equation>::calculate();
+	case ElementType::supersonic_outlet:	return related_cell_solution;
+	case ElementType::supersonic_inlet1:	return Supersonic_Inlet1_Neighbor_Solution<num_equation>::calculate();
+	case ElementType::supersonic_inlet2:	return Supersonic_Inlet2_Neighbor_Solution<num_equation>::calculate();
+	case ElementType::slip_wall:			return Slip_Wall_Neighbor_Solution<num_equation>::calculate(related_cell_solution);
 	default:
 		throw std::runtime_error("not supproted element type");
 		return {};

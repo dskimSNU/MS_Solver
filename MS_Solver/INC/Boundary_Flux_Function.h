@@ -32,6 +32,23 @@ public:
 	static Euclidean_Vector<num_equation> calculate(void) { return inflow_; };
 };
 
+template <ushort num_equation>
+class Slip_Wall_Neighbor_Solution
+{
+private:
+	Slip_Wall_Neighbor_Solution(void) = delete;
+
+public:
+	static Euclidean_Vector<num_equation> calculate(const Euclidean_Vector<num_equation>& solution) {
+		std::array<double, num_equation> neighbor_cell_solution_value = solution;		
+		
+		//temporal code for 2D
+		neighbor_cell_solution_value[1] *= -1;
+		neighbor_cell_solution_value[2] *= -1;
+		return neighbor_cell_solution_value;
+		//temporal code for 2D
+	};
+};
 
 template <typename Numerical_Flux_Function>
 class Boundary_Flux_Function

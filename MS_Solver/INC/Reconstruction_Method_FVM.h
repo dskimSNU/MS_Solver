@@ -241,6 +241,10 @@ void MLP_u1<Gradient_Method>::reconstruct(std::vector<Solution_>& solutions) {
     }  
 
     //Post_AI_Data::conditionally_record_solution_datas(solutions, solution_gradients);//postAI
+    std::vector<int> post_value1(solutions.size()); //post
+    std::vector<double> post_value2(solutions.size()); //post
+    std::vector<double> post_value3(solutions.size()); //post
+    std::vector<double> post_value4(solutions.size()); //post
 
     for (uint i = 0; i < solutions.size(); ++i) {
         const auto& gradient = solution_gradients[i];
@@ -266,13 +270,21 @@ void MLP_u1<Gradient_Method>::reconstruct(std::vector<Solution_>& solutions) {
             }
         }
         //Post_AI_Data::conditionally_record_limiting_value(i, limiting_values); //postAI
+        post_value1[i] = i; //post
+        post_value2[i] = limiting_values[0]; //post
+        post_value3[i] = gradient.at(0,0); //post
+        post_value4[i] = gradient.at(0, 1); //post
 
         const Matrix limiting_value_matrix = limiting_values;
         this->solution_gradients_[i] = limiting_value_matrix * gradient;
     }
 
-    Tecplot::conditionally_post_solution(solutions); //post
     //Post_AI_Data::conditionally_post(); //postAI
+    Tecplot::conditionally_record_cell_variables("cell index", post_value1); //post
+    Tecplot::conditionally_record_cell_variables("MLP-u1 limiter", post_value2); //post
+    Tecplot::conditionally_record_cell_variables("gradient x", post_value3); //post
+    Tecplot::conditionally_record_cell_variables("gradient y", post_value4); //post
+    Tecplot::conditionally_post_solution(solutions); //post
 };
 
 template <typename Gradient_Method>
@@ -346,6 +358,10 @@ void ANN_limiter<Gradient_Method>::reconstruct(const std::vector<Solution_>& sol
     }
 
     const auto initial_solution_gradients = this->solution_gradients_;
+    std::vector<int> post_value1(solutions.size()); //post
+    std::vector<double> post_value2(solutions.size()); //post
+    std::vector<double> post_value3(solutions.size()); //post
+    std::vector<double> post_value4(solutions.size()); //post
 
     const auto num_cell = solutions.size();    
     std::vector<double> post_limiter_value(num_cell);//post
@@ -392,11 +408,20 @@ void ANN_limiter<Gradient_Method>::reconstruct(const std::vector<Solution_>& sol
             limiting_values[j] = this->limit(input);
         }
 
-        post_limiter_value[i] = limiting_values[0];//post
+        post_value1[i] = i; //post
+        post_value2[i] = limiting_values[0]; //post
+        post_value3[i] = solution_gradients_[i].at(0, 0); //post
+        post_value4[i] = solution_gradients_[i].at(0, 1); //post
 
         const Matrix limiting_matrix = limiting_values;
         this->solution_gradients_[i] = limiting_matrix * this->solution_gradients_[i];
     }
+
+    Tecplot::conditionally_record_cell_variables("cell index", post_value1); //post
+    Tecplot::conditionally_record_cell_variables("ANN limiter", post_value2); //post
+    Tecplot::conditionally_record_cell_variables("gradient x", post_value3); //post
+    Tecplot::conditionally_record_cell_variables("gradient y", post_value4); //post
+    Tecplot::conditionally_post_solution(solutions); //post
 }
 
 template <typename Gradient_Method>

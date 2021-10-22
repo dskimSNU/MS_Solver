@@ -4,10 +4,10 @@
 
 // ########################################## OPTION ##################################################################
 
-#define __DEFAULT_PATH__						"D:/CodeData/model test_20211021/" + GOVERNING_EQUATION::name() + "/" + INITIAL_CONDITION::name() + "/" + SPATIAL_DISCRETE_METHOD::name() + "_" + RECONSTRUCTION_METHOD::name() + "/"
+#define __DEFAULT_PATH__						"D:/CodeData/20211022/" + GOVERNING_EQUATION::name() + "/" + INITIAL_CONDITION::name() + "/" + SPATIAL_DISCRETE_METHOD::name() + "_" + RECONSTRUCTION_METHOD::name() + "/"
 #define __DIMENSION__							2
 #define __GRID_FILE_TYPE__						__GMSH__
-#define __GRID_FILE_NAMES__						Shocktube_Quad_100x10
+#define __GRID_FILE_NAMES__						Shocktube_RQ_100x10
 #define __GOVERNING_EQUATION__					__EULER__
 #define __INITIAL_CONDITION__					__MODIFIED_SOD__
 #define __SPATIAL_DISCRETE_METHOD__				__FVM__
@@ -40,7 +40,7 @@
 // __GOVERNING_EQUATION__			__LINEAR_ADVECTION__, __BURGERS__, __EULER__
 // __INITIAL_CONDITION__			__SQUARE_WAVE__, __SINE_WAVE__, __CIRCLE_WAVE__, __GAUSSIAN_WAVE__, __CONSTANT1__, __BIG_SQAURE_WAVE__
 //									__MODIFIED_SOD__, __SUPERSONIC_EXPANSION__, __BLAST_WAVE_PROBLEM__, __DOUBLE_STRONG_SHOCK_PROBLEM__, __SLOWLY_MOVING_CONTACT__
-//									__SOD__, __HARTEN_LAX_PROBLEM__,  __SHU_OSHER__, __EXPLOSION_PROBLEM__, __DOUBLE_RAREFACTION_WAVE__
+//									__SOD__, __HARTEN_LAX_PROBLEM__, __BLAST_WAVE_INTERACTION__, __SHU_OSHER__, __EXPLOSION_PROBLEM__
 // __SPATIAL_DISCRETE_METHOD__		__FVM__, __HOM__
 // __RECONSTRUCTION_METHOD__		__CONSTANT_RECONSTRUCTION__, __LINEAR_RECONSTRUCTION__,  __MLP_u1_RECONSTRUCTION__, __ANN_RECONSTRUCTION__
 //									__POLYNOMIAL_RECONSTRUCTION__, __hMLP_RECONSTRUCTION__, __hMLP_BD_RECONSTRUCTION__
@@ -52,9 +52,10 @@
 // __POST_MODE__					__ASCII__, __BINARY__
 
 // Reference Constant
-// CFL		: Modified SOD(0.9), Supersonic Expansion(0.5), Blast wave problem(0.6), Double strong shock problem(0.8), Slowly-moving contact(0.6)
-// END TIME : Modified SOD(0.2), Supersonic Expansion(0.15), Blast wave problem(0.012), Double strong shock problem(0.035), Slowly-moving contact(0.012)
-//			  Harten Lax(0.15) & Double Rarefaction Wave, Shu_Osher(0.178), 
+// CFL		: Modified SOD(0.9), Supersonic Expansion(0.5), Blast-wave problem(0.6), Double strong shock problem(0.8), Slowly-moving contact(0.6)
+// 
+// END TIME : Modified SOD(0.2), Supersonic Expansion(0.15), Blast-wave problem(0.012), Double strong shock problem(0.035), Slowly-moving contact(0.012)
+//			  SOD(0.2), Harten-Lax(0.13), Blast-wave interaction(0.038), Shu_Osher(0.178), Explosion_problem(0.25) 
 
 // ######################################### OPTION END ################################################################
 
@@ -113,6 +114,9 @@
 #define GOVERNING_EQUATION		Euler<__DIMENSION__>
 #endif
 
+#if		__INITIAL_CONDITION__ == __CONSTANT1__
+#define INITIAL_CONDITION	Constant1<__DIMENSION__>
+#endif
 #if		__INITIAL_CONDITION__ == __SINE_WAVE__
 #define INITIAL_CONDITION	Sine_Wave<__DIMENSION__>
 #endif
@@ -125,29 +129,12 @@
 #if		__INITIAL_CONDITION__ == __GAUSSIAN_WAVE__
 #define INITIAL_CONDITION	Gaussian_Wave<__DIMENSION__>
 #endif
-#if		__INITIAL_CONDITION__ == __CONSTANT1__
-#define INITIAL_CONDITION	Constant1<__DIMENSION__>
-#endif
 #if		__INITIAL_CONDITION__ == __BIG_SQUARE_WAVE__
 #define INITIAL_CONDITION	Big_Square_Wave<__DIMENSION__>
 #endif
-#if		__INITIAL_CONDITION__ == __SOD__
-#define INITIAL_CONDITION	SOD<__DIMENSION__>
-#endif
+
 #if		__INITIAL_CONDITION__ == __MODIFIED_SOD__
 #define INITIAL_CONDITION	Modified_SOD<__DIMENSION__>
-#endif
-#if		__INITIAL_CONDITION__ == __SHU_OSHER__
-#define INITIAL_CONDITION	Shu_Osher<__DIMENSION__>
-#endif
-#if		__INITIAL_CONDITION__ == __EXPLOSION_PROBLEM__
-#define INITIAL_CONDITION	Explosion_Problem<__DIMENSION__>
-#endif 
-#if		__INITIAL_CONDITION__ == __DOUBLE_RAREFACTION_WAVE__
-#define INITIAL_CONDITION	Double_Rarefaction_Wave<__DIMENSION__>
-#endif 
-#if		__INITIAL_CONDITION__ == __HARTEN_LAX_PROBLEM__
-#define INITIAL_CONDITION	Harten_Lax_Problem<__DIMENSION__>
 #endif
 #if		__INITIAL_CONDITION__ == __SUPERSONIC_EXPANSION__
 #define INITIAL_CONDITION	Supersonic_Expansion<__DIMENSION__>
@@ -161,8 +148,21 @@
 #if		__INITIAL_CONDITION__ == __SLOWLY_MOVING_CONTACT__
 #define INITIAL_CONDITION	Slowly_Moving_Contact_Problem<__DIMENSION__>
 #endif
-
-
+#if		__INITIAL_CONDITION__ == __SOD__
+#define INITIAL_CONDITION	SOD<__DIMENSION__>
+#endif
+#if		__INITIAL_CONDITION__ == __HARTEN_LAX_PROBLEM__
+#define INITIAL_CONDITION	Harten_Lax_Problem<__DIMENSION__>
+#endif
+#if		__INITIAL_CONDITION__ == __BLAST_WAVE_INTERACTION__
+#define INITIAL_CONDITION	Blast_Wave_Interaction<__DIMENSION__>
+#endif 
+#if		__INITIAL_CONDITION__ == __SHU_OSHER__
+#define INITIAL_CONDITION	Shu_Osher<__DIMENSION__>
+#endif
+#if		__INITIAL_CONDITION__ == __EXPLOSION_PROBLEM__
+#define INITIAL_CONDITION	Explosion_Problem<__DIMENSION__>
+#endif 
 
 #if		__SPATIAL_DISCRETE_METHOD__ == __FVM__
 #define SPATIAL_DISCRETE_METHOD	FVM

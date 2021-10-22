@@ -9,11 +9,11 @@
 #define __BURGERS__						21
 #define __EULER__						22
 // INITIAL CONDITION
-#define __SINE_WAVE__					30
-#define __SQUARE_WAVE__					31
-#define __CIRCLE_WAVE__					32
-#define __GAUSSIAN_WAVE__				33
-#define __CONSTANT1__					34
+#define __CONSTANT1__					30
+#define __SINE_WAVE__					31
+#define __SQUARE_WAVE__					32
+#define __CIRCLE_WAVE__					33
+#define __GAUSSIAN_WAVE__				34
 #define __BIG_SQUARE_WAVE__				35
 
 #define __MODIFIED_SOD__				300
@@ -23,10 +23,10 @@
 #define __SLOWLY_MOVING_CONTACT__		304
 
 #define __SOD__							310
-#define __SHU_OSHER__					311
-#define __EXPLOSION_PROBLEM__			312
-#define __DOUBLE_RAREFACTION_WAVE__		313
-#define __HARTEN_LAX_PROBLEM__			314
+#define __HARTEN_LAX_PROBLEM__			311
+#define __BLAST_WAVE_INTERACTION__		312
+#define __SHU_OSHER__					313
+#define __EXPLOSION_PROBLEM__			314
 
 
 
