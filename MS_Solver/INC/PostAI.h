@@ -175,7 +175,7 @@ void Post_AI_Data::record_solution_datas(const std::vector<Euclidean_Vector<num_
 	dynamic_require(num_data_ == solutions.size(),			"number of solution should be same with number of data");
 	dynamic_require(num_data_ == solution_gradients.size(), "number of solution gradient should be same with number of data");
 
-	const auto solution_strings = convert_to_solution_strings(solutions);	//?
+	const auto solution_strings = convert_to_solution_strings(solutions);	
 	const auto solution_gradient_strings = convert_to_solution_gradient_strings(solution_gradients);
 
 	std::string cell_average_string;
@@ -193,8 +193,11 @@ void Post_AI_Data::record_solution_datas(const std::vector<Euclidean_Vector<num_
 		const auto max_solution = *std::max_element(vertex_share_cell_solutions.begin(), vertex_share_cell_solutions.end());
 		const auto solution_diff = max_solution - min_solution;
 
-		if (solution_diff < 0.01)	//postAI
+		if (solution_diff < 0.01) //postAI
 			continue;
+
+		//if (cell_nodes_[i][0] < 0.3 || cell_nodes_[i][0] > 0.7) //postAI
+		//  continue;
 			
 		target_cell_indexes_.push_back(i);
 
@@ -222,7 +225,6 @@ void Post_AI_Data::conditionally_record_solution_datas(const std::vector<Euclide
 
 template <ushort num_equation>
 void Post_AI_Data::record_limiting_value(const size_t index, const std::array<double, num_equation>& limiting_value) {
-	//size_t num_equation = limiting_value.size();
 
 	if (std::find(target_cell_indexes_.begin(), target_cell_indexes_.end(), index) == target_cell_indexes_.end())
 		return;
@@ -242,8 +244,6 @@ void Post_AI_Data::conditionally_record_limiting_value(const size_t index, const
 	if (This_::post_condition_)
 		This_::record_limiting_value(index, limiting_value);
 }
-
-
 
 
 template <size_t space_dimension>

@@ -6,7 +6,6 @@ namespace ms {
 	inline void apply_user_defined_setting(void);
 }
 
-
 using Grid_Element_Builder_		= Grid_Element_Builder<GRID_FILE_TYPE, __DIMENSION__>;
 using Grid_						= Grid<__DIMENSION__>;
 using Semi_Discrete_Equation_	= Semi_Discrete_Equation<GOVERNING_EQUATION, SPATIAL_DISCRETE_METHOD, RECONSTRUCTION_METHOD, NUMERICAL_FLUX_FUNCTION, SCAILING_METHOD_FLAG>;
@@ -18,7 +17,6 @@ int main(void) {
 	const char delimiter = ',';
 	std::string grid_file_names_str = GRID_FILE_NAMES;
 	auto grid_file_names = ms::parse(grid_file_names_str, delimiter);
-	
 
 	for (auto& grid_file_name : grid_file_names) {
 		ms::be_removed(grid_file_name, " ");
@@ -53,9 +51,6 @@ int main(void) {
 		Log::set_path(__DEFAULT_PATH__ + grid_file_name + "_" + date_str + "/");
 		Tecplot::set_path(__DEFAULT_PATH__ + grid_file_name + "_" + date_str + "/"); //post
 		//Post_AI_Data::set_path(__DEFAULT_PATH__ + grid_file_name + "_" + date_str + "/Post_AI/"); //postAI
-		//Log::set_path(__DEFAULT_PATH__ + grid_file_name + "_" + date_str + "_" + ms::to_string(__hMLP_BD_TYPE__) + "/");
-		//Tecplot::set_path(__DEFAULT_PATH__ + grid_file_name + "_" + date_str + "_" + ms::to_string(__hMLP_BD_TYPE__) + "/"); //post
-
 
 		auto grid_element = Grid_Element_Builder_::build_from_grid_file(grid_file_name);
 		Grid_ grid(std::move(grid_element));
@@ -65,7 +60,6 @@ int main(void) {
 
 		Semi_Discrete_Equation_ semi_discrete_equation(grid);
 		auto solutions = semi_discrete_equation.calculate_initial_solutions<INITIAL_CONDITION>();
-
 
 		try { Discrete_Equation_::solve<TIME_STEP_METHOD>(semi_discrete_equation, solutions); }
 		catch (const std::exception& exception) {
@@ -79,7 +73,7 @@ int main(void) {
 			std::exit(523);
 		}
 
-		semi_discrete_equation.estimate_error<INITIAL_CONDITION>(solutions, __SOLVE_END_CONDITION_CONSTANT__);
+		//semi_discrete_equation.estimate_error<INITIAL_CONDITION>(solutions, __SOLVE_END_CONDITION_CONSTANT__);
 
 		Log::write();
 	}
@@ -91,15 +85,14 @@ namespace ms {
 #if		__RECONSTRUCTION_METHOD__	== __ANN_RECONSTRUCTION__
 		ANN_limiter<GRADIENT_METHOD>::set_model(TO_STRING(__ANN_MODEL__));
 #endif
-
 		if constexpr (__DIMENSION__ == 2) {
 			Linear_Advection<2>::initialize({ X_ADVECTION_SPEED, Y_ADVECTION_SPEED });
 			Sine_Wave<2>::initialize({ X_WAVE_LENGTH, Y_WAVE_LENGTH });
 
-#if __GOVERNING_EQUATION__ == __EULER__			
-			Supersonic_Inlet1_Neighbor_Solution<GOVERNING_EQUATION::num_equation()>::initialize({ INFLOW_RHO1,INFLOW_RHOU1,INFLOW_RHOV1,INFLOW_RHOE1 });
-			Supersonic_Inlet2_Neighbor_Solution<GOVERNING_EQUATION::num_equation()>::initialize({ INFLOW_RHO2,INFLOW_RHOU2,INFLOW_RHOV2,INFLOW_RHOE2 });
-#endif
+		#if __GOVERNING_EQUATION__ == __EULER__			
+					Supersonic_Inlet1_Neighbor_Solution<GOVERNING_EQUATION::num_equation()>::initialize({ INFLOW_RHO1,INFLOW_RHOU1,INFLOW_RHOV1,INFLOW_RHOE1 });
+					Supersonic_Inlet2_Neighbor_Solution<GOVERNING_EQUATION::num_equation()>::initialize({ INFLOW_RHO2,INFLOW_RHOU2,INFLOW_RHOV2,INFLOW_RHOE2 });
+		#endif
 		}
 		else if constexpr (__DIMENSION__ == 3) {
 			Linear_Advection<3>::initialize({ X_ADVECTION_SPEED, Y_ADVECTION_SPEED, Z_ADVECTION_SPEED });

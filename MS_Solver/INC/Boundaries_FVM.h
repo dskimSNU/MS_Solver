@@ -123,12 +123,12 @@ void Boundaries_FVM_Linear<Reconstruction_Method, Numerical_Flux_Function>::calc
         Solution_ oc_solution;
         //For 2D SCL
         if constexpr(Solution_::dimension() == 1)
-            oc_solution = solutions[oc_index]; //conservative variables
+            oc_solution = solutions[oc_index];                  //conservative variables
 
         //For 2D Euler
         else if constexpr(Solution_::dimension() == 4) {
-            oc_solution = primitive_variables[oc_index]; //primitive varialbes
-            //oc_solution = characteristic_variables[oc_index]; //characteristic variables
+            oc_solution = primitive_variables[oc_index];      //primitive varialbes
+            //oc_solution = characteristic_variables[oc_index];   //characteristic variables
         }
 
         const auto& oc_solution_gradient = solution_gradients[oc_index];
@@ -137,8 +137,8 @@ void Boundaries_FVM_Linear<Reconstruction_Method, Numerical_Flux_Function>::calc
         auto oc_side_solution = oc_solution + oc_solution_gradient * oc_to_face_vector;
 
         if constexpr(Solution_::dimension() == 4) {
-            oc_side_solution = ds::primitive_to_conservative(oc_side_solution); //primitive to conservative
-            //oc_side_solution = K_matrices.at(oc_index) * oc_side_solution; //characteristic to conservative
+            oc_side_solution = ds::primitive_to_conservative(oc_side_solution);
+            //oc_side_solution = ds::characteristic_to_conservative(K_matrices[oc_index], oc_side_solution);
         }
 
         const auto boundary_flux = boundary_flux_function->calculate(oc_side_solution, normal);

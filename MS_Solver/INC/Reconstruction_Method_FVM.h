@@ -7,6 +7,8 @@
 namespace ds {
     inline Euclidean_Vector<4> conservative_to_primitive(const Euclidean_Vector<4>& conservativie_variables);
     inline Euclidean_Vector<4> primitive_to_conservative(const Euclidean_Vector<4>& primitive_variables);
+    inline Euclidean_Vector<4> conservative_to_characteristic(const Matrix<4, 4>& eigenvector_matrix, const Euclidean_Vector<4>& conservative_variables);
+    inline Euclidean_Vector<4> characteristic_to_conservative(const Matrix<4, 4>& eigenvector_matrix, const Euclidean_Vector<4>& characteristic_variables);
 }
 
 
@@ -95,6 +97,7 @@ public:
 public:
     void reconstruct(std::vector<Solution_>& solutions);
     const std::vector<Solution_Gradient_>& get_solution_gradients(void) const { return this->solution_gradients_; };
+
     void calculate_K_matrices(const std::vector<Solution_>& solutions);
     const std::vector<Matrix<num_equation_, num_equation_>>& get_K_matrices() const { return this->K_matrices_; };
     std::vector<Solution_> get_characteristic_variables() const { return this->characteristic_variables_; };
@@ -148,6 +151,8 @@ private:
     std::vector<std::vector<uint>> set_of_indexes_;
     std::vector<double> chracteristic_length_;
     std::vector<Solution_> primitive_variables_;
+    std::vector<std::vector<size_t>> set_of_vertex_share_cell_indexes_;
+    std::vector<std::vector<size_t>> set_of_face_share_cell_indexes_;
 
 public:
     ANN_limiter(const Grid<space_dimension_>& grid);
@@ -159,6 +164,7 @@ public:
 
 private:
     std::vector<double> normalize (const std::vector<double>& input_values); //ds
+    std::vector<size_t> ordering_function_using_solutions(const std::vector<Solution_>& solutions, const size_t target_cell_index, const size_t equation_index) const;
     double limit(Dynamic_Euclidean_Vector& feature) const;
     ANN_Model read_model(void) const;
 
@@ -185,17 +191,18 @@ namespace ms {
 
 
 //template definition part
-// 
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////Linear reconstruction///////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
+/************************************************************************************************************************************************************
+*************************************************************************************************************************************************************
+*************************************************************************************************************************************************************/
+
 template <typename Gradient_Method>
 void Linear_Reconstruction<Gradient_Method>::reconstruct(const std::vector<Solution_>& solutions) {
     this->solution_gradients_ = this->gradient_method_.calculate_solution_gradients(solutions);
 }
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////MLP-u1 limiter/////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/************************************************************************************************************************************************************
+*************************************************************************************************************************************************************
+*************************************************************************************************************************************************************/
 
 template <typename Gradient_Method>
 MLP_u1<Gradient_Method>::MLP_u1(const Grid<space_dimension_>& grid) : gradient_method_(grid), vnode_index_to_share_cell_index_set_(grid.get_vnode_index_to_share_cell_index_set_consider_pbdry()) {
@@ -214,7 +221,6 @@ MLP_u1<Gradient_Method>::MLP_u1(const Grid<space_dimension_>& grid) : gradient_m
     Log::print();
 }
 
-
 template <typename Gradient_Method>
 void MLP_u1<Gradient_Method>::reconstruct(std::vector<Solution_>& solutions) {
 
@@ -223,7 +229,7 @@ void MLP_u1<Gradient_Method>::reconstruct(std::vector<Solution_>& solutions) {
 
     //For 2D SCL
     if constexpr (Solution_::dimension() == 1) {
-        solution_gradients = this->gradient_method_.calculate_solution_gradients(solutions); //1. conservative variables
+        solution_gradients = this->gradient_method_.calculate_solution_gradients(solutions); //1.conservative variables
         vnode_index_to_min_max_solution = this->calculate_vertex_node_index_to_min_max_solution(solutions);
     }
 
@@ -231,16 +237,16 @@ void MLP_u1<Gradient_Method>::reconstruct(std::vector<Solution_>& solutions) {
     else if constexpr (Solution_::dimension() == 4) {
         calculate_K_matrices(solutions);
         for (int i = 0; i < solutions.size(); i++) {
-            primitive_variables_[i] = ds::conservative_to_primitive(solutions[i]); //primitive variables
-            //characteristic_variables_[i] = K_matrices_at(i).inverse() * solutions[i]; //characteristic variables
+            primitive_variables_[i] = ds::conservative_to_primitive(solutions[i]); //2.primitive variables
+            //characteristic_variables_[i] = ds::conservative_to_characteristic(K_matrices_[i], solutions[i]); //3.characteristic variables
         }
-        solution_gradients = this->gradient_method_.calculate_solution_gradients(primitive_variables_); //2. primitive variables
+        solution_gradients = this->gradient_method_.calculate_solution_gradients(primitive_variables_); 
         vnode_index_to_min_max_solution = this->calculate_vertex_node_index_to_min_max_solution(primitive_variables_);
-        //solution_gradients = this->gradient_method_.calculate_solution_gradients(characteristic_variables_); //3. characteristic variables
+        //solution_gradients = this->gradient_method_.calculate_solution_gradients(characteristic_variables_); 
         //vnode_index_to_min_max_solution = this->calculate_vertex_node_index_to_min_max_solution(characteristic_variables_);
     }  
 
-    //Post_AI_Data::conditionally_record_solution_datas(solutions, solution_gradients);//postAI
+    Post_AI_Data::conditionally_record_solution_datas(solutions, solution_gradients);//postAI
     std::vector<int> post_value1(solutions.size()); //post
     std::vector<double> post_value2(solutions.size()); //post
     std::vector<double> post_value3(solutions.size()); //post
@@ -269,8 +275,8 @@ void MLP_u1<Gradient_Method>::reconstruct(std::vector<Solution_>& solutions) {
                 limiting_values[e] = (std::min)(limiting_values[e], limiting_value);
             }
         }
-        //Post_AI_Data::conditionally_record_limiting_value(i, limiting_values); //postAI
-        post_value1[i] = i; //post
+        Post_AI_Data::conditionally_record_limiting_value(i, limiting_values); //postAI
+        post_value1[i] = (int) i; //post
         post_value2[i] = limiting_values[0]; //post
         post_value3[i] = gradient.at(0,0); //post
         post_value4[i] = gradient.at(0, 1); //post
@@ -279,7 +285,7 @@ void MLP_u1<Gradient_Method>::reconstruct(std::vector<Solution_>& solutions) {
         this->solution_gradients_[i] = limiting_value_matrix * gradient;
     }
 
-    //Post_AI_Data::conditionally_post(); //postAI
+    Post_AI_Data::conditionally_post(); //postAI
     Tecplot::conditionally_record_cell_variables("cell index", post_value1); //post
     Tecplot::conditionally_record_cell_variables("MLP-u1 limiter", post_value2); //post
     Tecplot::conditionally_record_cell_variables("gradient x", post_value3); //post
@@ -296,17 +302,19 @@ void MLP_u1<Gradient_Method>::calculate_K_matrices(const std::vector<Solution_>&
         auto u = solutions[i][1] / rho;
         auto v = solutions[i][2] / rho;
         auto E = solutions[i][3] / rho;
-        auto e = E - 0.5 * (u * u + v * v);
+
+        auto V = std::sqrt(u * u + v * v);
+        auto e = E - 0.5 * V * V;
         auto p = e * (gamma - 1.0) * rho;
-        auto H = 0.5 * u * u + (e + p);
+        auto H = E + p / rho;
         auto a = std::sqrt(gamma * p / rho);
 
-        Matrix<num_equation_, num_equation_> K = {     1,                     1,        0,         1,
-                                                   u - a,                     u,        0,     u + a,
-                                                       v,                     v,        1,         v,
-                                               H - a * u, 0.5 * (u * u + v * v),        v, H + u * a };
+        Matrix<num_equation_, num_equation_> K = {     1,                     1,            0,                  1,
+                                                   u - a,                     u,            0,              u + a,
+                                                       v,                     v,            1,                  v,
+                                               H - u * a,           0.5 * u * u,            v,          H + u * a };
 
-        K_matrices_[i] = K;
+        K_matrices_.at(i) = K;
     }
 };
 
@@ -327,14 +335,19 @@ auto MLP_u1<Gradient_Method>::calculate_vertex_node_index_to_min_max_solution(co
     return vnode_index_to_min_max_solution;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////ANN-based limiter////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
+/************************************************************************************************************************************************************
+*************************************************************************************************************************************************************
+*************************************************************************************************************************************************************/
 
 template <typename Gradient_Method>
 ANN_limiter<Gradient_Method>::ANN_limiter(const Grid<space_dimension_>& grid) :gradient_method_(grid) {
-    this->set_of_indexes_ = grid.ANN_indexes();
 
+    this->set_of_vertex_share_cell_indexes_ = grid.set_of_vertex_share_cell_indexes_consider_pbdry();
+    this->set_of_face_share_cell_indexes_ = grid.set_of_face_share_cell_indexes_consider_pbdry(); //debug
+    for (size_t i = 0; i < set_of_face_share_cell_indexes_.size(); i++)
+        std::sort(set_of_face_share_cell_indexes_[i].begin(), set_of_face_share_cell_indexes_[i].end());
+    
+    this->set_of_indexes_ = grid.ANN_indexes();
     const auto cell_volumes = grid.cell_volumes();
     const auto num_cell = cell_volumes.size();
     this->chracteristic_length_.resize(num_cell);
@@ -352,9 +365,8 @@ void ANN_limiter<Gradient_Method>::reconstruct(const std::vector<Solution_>& sol
 
     else if constexpr (Solution_::dimension() == 4) {
         for (int i = 0; i < solutions.size(); i++)
-            primitive_variables_[i] = ds::conservative_to_primitive(solutions[i]); //primitive variables
-            this->solution_gradients_ = this->gradient_method_.calculate_solution_gradients(primitive_variables_); //2. primitive variables
-
+            primitive_variables_[i] = ds::conservative_to_primitive(solutions[i]);                             //2. primitive variables
+            this->solution_gradients_ = this->gradient_method_.calculate_solution_gradients(primitive_variables_);
     }
 
     const auto initial_solution_gradients = this->solution_gradients_;
@@ -371,15 +383,17 @@ void ANN_limiter<Gradient_Method>::reconstruct(const std::vector<Solution_>& sol
             continue;
         }
 
-        const auto ordered_indexes = this->set_of_indexes_[i];
-        const auto num_ordered_index = ordered_indexes.size();
+        //const auto ordered_indexes = this->set_of_indexes_[i]; //1. ordering based on cell index
+        //const auto num_ordered_index = ordered_indexes.size();
 
-        const auto num_input_values = 3 * num_ordered_index; //temporal code
-
+        //const auto num_input_values = num_ordered_index;
+        //const auto num_input_values = 3 * num_ordered_index; 
         std::array<double, num_equation_> limiting_values = { 1 };
 
         for (size_t j = 0; j < num_equation_; ++j) {
-            std::vector<double> input_values(num_input_values);
+            const auto ordered_indexes = this->ordering_function_using_solutions(solutions, i, j); //2. ordering based on solution
+            const auto num_ordered_index = ordered_indexes.size();
+            std::vector<double> input_values(num_ordered_index);
 
             for (size_t k = 0; k < num_ordered_index; ++k) {
                 const auto index = ordered_indexes[k];
@@ -389,26 +403,28 @@ void ANN_limiter<Gradient_Method>::reconstruct(const std::vector<Solution_>& sol
                     solution = solutions[index];                //1. conservative variables
                 else if constexpr (Solution_::dimension() ==4)
                     solution = primitive_variables_[index];     //2. primitive variables
-
-                const auto& solution_gradient = initial_solution_gradients[index];
+                //const auto& solution_gradient = initial_solution_gradients[index];
 
                 const auto solution_start_index = 0;
-                const auto solution_gradient_x_start_index = num_ordered_index;
-                const auto solution_gradient_y_start_index = 2 * num_ordered_index;
+                //const auto solution_gradient_x_start_index = num_ordered_index;
+                //const auto solution_gradient_y_start_index = 2 * num_ordered_index;
 
                 input_values[solution_start_index + k] = solution.at(j);
-                input_values[solution_gradient_x_start_index + k] = solution_gradient.at(j, 0) * this->chracteristic_length_[i];
-                input_values[solution_gradient_y_start_index + k] = solution_gradient.at(j, 1) * this->chracteristic_length_[i];
+                //input_values[solution_gradient_x_start_index + k] = solution_gradient.at(j, 0) * this->chracteristic_length_[i];
+                //input_values[solution_gradient_y_start_index + k] = solution_gradient.at(j, 1) * this->chracteristic_length_[i];
             }
 
-            //std::vector<double> normalized_input_values = this->normalize(input_values); //normalization
-            //Dynamic_Euclidean_Vector input = std::move(normalized_input_values);
-            Dynamic_Euclidean_Vector input = std::move(input_values);
-
+            std::vector<double> normalized_input_values = this->normalize(input_values); //normalization
+            Dynamic_Euclidean_Vector input = std::move(normalized_input_values);
+            //Dynamic_Euclidean_Vector input = std::move(input_values);
             limiting_values[j] = this->limit(input);
+
+            limiting_values[j] -= 0.001;
+            if (limiting_values[j] < 0.0)
+                limiting_values[j] = 0.0;
         }
 
-        post_value1[i] = i; //post
+        post_value1[i] = (int) i; //post
         post_value2[i] = limiting_values[0]; //post
         post_value3[i] = solution_gradients_[i].at(0, 0); //post
         post_value4[i] = solution_gradients_[i].at(0, 1); //post
@@ -416,7 +432,6 @@ void ANN_limiter<Gradient_Method>::reconstruct(const std::vector<Solution_>& sol
         const Matrix limiting_matrix = limiting_values;
         this->solution_gradients_[i] = limiting_matrix * this->solution_gradients_[i];
     }
-
     Tecplot::conditionally_record_cell_variables("cell index", post_value1); //post
     Tecplot::conditionally_record_cell_variables("ANN limiter", post_value2); //post
     Tecplot::conditionally_record_cell_variables("gradient x", post_value3); //post
@@ -426,33 +441,73 @@ void ANN_limiter<Gradient_Method>::reconstruct(const std::vector<Solution_>& sol
 
 template <typename Gradient_Method>
 std::vector<double> ANN_limiter<Gradient_Method>::normalize(const std::vector<double>& feature) {
-    const int num_feature = feature.size();
-    const int num_avg_feature = num_feature / 3; // 3 types of feature : [avg, grad_x, grad_y]
-    const double avg_max = *max_element(feature.begin(), feature.begin() + num_avg_feature - 1);
-    const double avg_min = *min_element(feature.begin(), feature.begin() + num_avg_feature - 1);
-    const double grad_max = *max_element(feature.begin() + num_avg_feature, feature.end());
-    const double grad_min = *min_element(feature.begin() + num_avg_feature, feature.end());
+    const int num_feature = (int) feature.size();
+    const double avg_max = *max_element(feature.begin(), feature.begin() + num_feature - 1);
+    const double avg_min = *min_element(feature.begin(), feature.begin() + num_feature - 1);
 
-    if ((avg_max == avg_min) || (grad_max == grad_min))
+    if (avg_max == avg_min)
         return feature;
 
     std::vector<double> normalized_feature(num_feature);
-    for (int i = 0; i < num_avg_feature; i++)
+    for (int i = 0; i < num_feature; i++)
         normalized_feature[i] = (feature[i] - avg_min) / (avg_max - avg_min);
-    for(int i = num_avg_feature; i < num_feature; i++)
-        normalized_feature[i] = (feature[i] - grad_min) / (grad_max - grad_min);
 
     return normalized_feature;
 }
 
+//수정
+template <typename Gradient_Method>
+std::vector<size_t> ANN_limiter<Gradient_Method>::ordering_function_using_solutions(const std::vector<Solution_>& solutions, const size_t target_cell_index, const size_t equation_index) const
+{
+    const auto& vnode_share_cell_indexes = this->set_of_vertex_share_cell_indexes_.at(target_cell_index);
+
+    const auto num_vnode_share_cell = vnode_share_cell_indexes.size();
+    const auto num_ordered_indexes = num_vnode_share_cell + 1; // include target cell
+
+    std::vector<size_t> ordered_indexes;
+    ordered_indexes.reserve(num_ordered_indexes);
+
+    ordered_indexes.push_back(target_cell_index);
+
+    while (ordered_indexes.size() != num_ordered_indexes) {
+        const auto& face_share_cell_indexes = this->set_of_face_share_cell_indexes_.at(ordered_indexes.back());
+
+        std::vector<size_t> face_share_cell_indexes_in_chunk;
+        std::set_intersection(vnode_share_cell_indexes.begin(), vnode_share_cell_indexes.end(), face_share_cell_indexes.begin(), face_share_cell_indexes.end(), std::back_inserter(face_share_cell_indexes_in_chunk)); //debug
+
+        std::vector<size_t> candidate_cell_indexes;
+        std::set<size_t> ordered_index_set(ordered_indexes.begin(), ordered_indexes.end());
+        std::set_difference(face_share_cell_indexes_in_chunk.begin(), face_share_cell_indexes_in_chunk.end(), ordered_index_set.begin(), ordered_index_set.end(), std::back_inserter(candidate_cell_indexes));
+
+        if (1 < candidate_cell_indexes.size()) {
+            std::vector<double> temporary_solutions;
+            temporary_solutions.reserve(candidate_cell_indexes.size());
+
+            for (const auto candidate_cell_index : candidate_cell_indexes)
+                temporary_solutions.push_back(solutions[candidate_cell_index].at(equation_index));
+
+            std::reverse(temporary_solutions.begin(), temporary_solutions.end());   //solution이 같을 경우, cell index 큰 순서대로  
+            std::reverse(candidate_cell_indexes.begin(), candidate_cell_indexes.end());
+
+            const auto max_solution_iter = std::max_element(temporary_solutions.begin(), temporary_solutions.end());
+            const auto pos = max_solution_iter - temporary_solutions.begin();
+
+            const auto index = *std::next(candidate_cell_indexes.begin(), pos);
+            ordered_indexes.push_back(index);
+        }
+        else
+            ordered_indexes.push_back(candidate_cell_indexes.front());
+    }
+    return ordered_indexes;
+}
 
 template <typename Gradient_Method>
 double ANN_limiter<Gradient_Method>::limit(Dynamic_Euclidean_Vector& feature) const {
     static const auto model = this->read_model();
     static const auto num_layer = model.weights.size();
     static const ReLU activation_function;
-    static const Sigmoid output_function;
-    //static const HardTanh output_function;
+    //static const Sigmoid output_function;
+    static const HardTanh output_function;
 
     //hidden layer
     for (ushort i = 0; i < num_layer - 1; ++i) {
@@ -501,7 +556,6 @@ ANN_Model ANN_limiter<Gradient_Method>::read_model(void) const {
         model.weights.push_back({ static_cast<size_t>(num_row), static_cast<size_t>(num_column), std::move(weight) });
         model.biases.push_back({ std::move(bias) });
     }
-
     return model;
 }
 
@@ -520,7 +574,6 @@ namespace ds {
 
         return { rho, u, v, p };
     }
-
     inline Euclidean_Vector<4> primitive_to_conservative(const Euclidean_Vector<4>& primitive_variables) {
         const auto rho = primitive_variables[0];
         const auto u = primitive_variables[1];
@@ -530,5 +583,12 @@ namespace ds {
         const auto E = (0.5 * u * u + 0.5 * v * v + e);
 
         return { rho, rho * u, rho * v, rho * E };     
+    }
+
+    inline Euclidean_Vector<4> conservative_to_characteristic(const Matrix<4, 4>& eigenvector_matrix, const Euclidean_Vector<4>& conservative_variables) {
+        return eigenvector_matrix.inverse() * conservative_variables;
+    }
+    inline Euclidean_Vector<4> characteristic_to_conservative(const Matrix<4, 4>& eigenvector_matrix, const Euclidean_Vector<4>& characteristic_variables) {
+        return eigenvector_matrix * characteristic_variables;
     }
 }

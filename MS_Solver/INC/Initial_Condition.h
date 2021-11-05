@@ -146,6 +146,36 @@ public:
     static constexpr ushort space_dimension(void);
 };
 
+template<ushort space_dimension_>
+class Big_Sine_Wave : public IC
+{
+    // sin(kx)
+private:
+    Big_Sine_Wave(void) = delete;
+
+private:
+    static constexpr ushort num_eqation_ = 1;
+
+    using This_ = Sine_Wave<space_dimension_>;
+    using Space_Vector_ = Euclidean_Vector<space_dimension_>;
+
+private:
+    inline static std::array<double, space_dimension_> wave_numbers_;
+
+public:
+    static void initialize(const std::array<double, space_dimension_>& wave_lengths);
+
+public:
+    static Euclidean_Vector<1> calculate_solution(const Space_Vector_& space_vector);
+    static std::vector<Euclidean_Vector<1>> calculate_solutions(const std::vector<Space_Vector_>& space_vectors);
+    static std::vector<Euclidean_Vector<1>> calculate_exact_solutions(const std::vector<Space_Vector_>& space_vectors, const double end_time);
+
+public:
+    static std::string name(void);
+    static constexpr ushort space_dimension(void);
+};
+
+
 //For 2D Euler
 //Toro shock-tube 5 cases
 template <ushort space_dimension_>
@@ -258,7 +288,6 @@ public:
     static constexpr ushort space_dimension(void);
 };
 
-//Additional shock-tube cases
 template <ushort space_dimension_>
 class SOD : public IC
 {
@@ -369,6 +398,28 @@ public:
     static constexpr ushort space_dimension(void);
 };
 
+template <ushort space_dimension_>
+class Riemann_Problem : public IC
+{
+private:
+    Riemann_Problem(void) = delete;
+
+private:
+    static constexpr size_t num_eqation_ = 2 + space_dimension_;
+
+    using This_ = Riemann_Problem<space_dimension_>;
+    using Space_Vector_ = Euclidean_Vector<space_dimension_>;
+    using Solution_ = Euclidean_Vector<num_eqation_>;
+
+public:
+    static Solution_ calculate_solution(const Space_Vector_& space_vector);
+    static std::vector<Solution_> calculate_solutions(const std::vector<Space_Vector_>& cell_centers);//for FVM
+
+public:
+    static std::string name(void);
+    static constexpr ushort space_dimension(void);
+};
+
 namespace ms {
     template <typename T>
     inline constexpr bool is_initial_condition = std::is_base_of_v<IC, T>;
@@ -403,6 +454,7 @@ template <ushort space_dimension_>
 void Sine_Wave<space_dimension_>::initialize(const std::array<double, space_dimension_>& wave_lengths) {
     for (ushort i = 0; i < space_dimension_; ++i)
         This_::wave_numbers_[i] = 2 * std::numbers::pi / wave_lengths[i];
+        //This_::wave_numbers_[i] = 2 * std::numbers::pi / wave_lengths[0];
 }
 template <ushort space_dimension_>
 Euclidean_Vector<1> Sine_Wave<space_dimension_>::calculate_solution(const Space_Vector_& space_vector) {
@@ -410,6 +462,8 @@ Euclidean_Vector<1> Sine_Wave<space_dimension_>::calculate_solution(const Space_
 
     for (ushort i = 0; i < space_dimension_; ++i) 
         solution *= std::sin(This_::wave_numbers_[i] * space_vector[i]);
+
+    //solution *= std::sin(This_::wave_numbers_[0] * space_vector[0]);
 
     return { solution };
 }
@@ -565,6 +619,60 @@ std::string Big_Square_Wave<space_dimension_>::name(void) {
 };
 template <ushort space_dimension_>
 constexpr ushort Big_Square_Wave<space_dimension_>::space_dimension(void) {
+    return space_dimension_;
+}
+
+//Big sine wave
+template <ushort space_dimension_>
+void Big_Sine_Wave<space_dimension_>::initialize(const std::array<double, space_dimension_>& wave_lengths) {
+    for (ushort i = 0; i < space_dimension_; ++i)
+        This_::wave_numbers_[i] = 2 * std::numbers::pi / wave_lengths[0];
+}
+template <ushort space_dimension_>
+Euclidean_Vector<1> Big_Sine_Wave<space_dimension_>::calculate_solution(const Space_Vector_& space_vector) {
+    double solution = 1.0;
+
+    solution *= std::sin(This_::wave_numbers_[0] * space_vector[0]);
+
+    return { solution };
+}
+template<ushort space_dimension_>
+std::vector<Euclidean_Vector<1>> Big_Sine_Wave<space_dimension_>::calculate_solutions(const std::vector<Space_Vector_>& space_vectors) {
+    const auto num_cell = space_vectors.size();
+
+    std::vector<Euclidean_Vector<1>> solutions(num_cell);
+    for (size_t i = 0; i < num_cell; ++i)
+        solutions[i] = This_::calculate_solution(space_vectors[i]);
+
+    return solutions;
+}
+template<ushort space_dimension_>
+std::vector<Euclidean_Vector<1>> Big_Sine_Wave<space_dimension_>::calculate_exact_solutions(const std::vector<Space_Vector_>& space_vectors, const double end_time) {
+    //확인 필요
+    const auto advection_speed = Linear_Advection<space_dimension_>::advection_speed();
+
+    const auto num_cell = space_vectors.size();
+    std::vector<Euclidean_Vector<1>> exact_solutions(num_cell);
+
+    for (size_t i = 0; i < num_cell; ++i) {
+        const auto& cell_center = space_vectors[i];
+
+        double exact_solution = 1.0;
+
+        for (ushort j = 0; j < space_dimension_; ++j)
+            exact_solution *= std::sin(This_::wave_numbers_[j] * (cell_center[j] - advection_speed[j] * end_time));
+
+        exact_solutions[i] = exact_solution;
+    }
+
+    return exact_solutions;
+}
+template <ushort space_dimension_>
+std::string Big_Sine_Wave<space_dimension_>::name(void) {
+    return "Big_Sine_Wave";
+};
+template <ushort space_dimension_>
+constexpr ushort Big_Sine_Wave<space_dimension_>::space_dimension(void) {
     return space_dimension_;
 }
 
@@ -1043,6 +1151,93 @@ constexpr ushort Explosion_Problem<space_dimension_>::space_dimension(void) {
     return space_dimension_;
 }
 
+//Explosion
+template <ushort space_dimension_>
+Riemann_Problem<space_dimension_>::Solution_ Riemann_Problem<space_dimension_>::calculate_solution(const Space_Vector_& space_vector) {
+    constexpr auto gamma = 1.4;
+    constexpr auto c = 1 / (gamma - 1);
+
+    const auto x_coordinate = space_vector.at(0);
+    const auto y_coordinate = space_vector.at(1);
+
+    if constexpr (space_dimension_ == 2) {
+        if (x_coordinate >= 0.8 && x_coordinate <= 1.0 && y_coordinate >= 0.8 && y_coordinate <= 1.0) {
+            constexpr auto rho = 1.5;
+            constexpr auto u = 0.0;
+            constexpr auto v = 0.0;
+            constexpr auto p = 1.5;
+
+            constexpr auto rhou = rho * u;
+            constexpr auto rhov = rho * v;
+            constexpr auto rhoE = p * c + 0.5 * (rhou * u + rhov * v);
+
+            return { rho, rhou, rhov, rhoE };
+        }
+
+        else if (x_coordinate >= 0.0 && x_coordinate <= 0.8 && y_coordinate >= 0.8 && y_coordinate <= 1.0) {
+            constexpr auto rho = 0.5323;
+            constexpr auto u = 1.206;
+            constexpr auto v = 0.0;
+            constexpr auto p = 0.3;
+
+            constexpr auto rhou = rho * u;
+            constexpr auto rhov = rho * v;
+            constexpr auto rhoE = p * c + 0.5 * (rhou * u + rhov * v);
+
+            return { rho, rhou, rhov, rhoE };
+        }
+
+        else if (x_coordinate >= 0.0 && x_coordinate <= 0.8 && y_coordinate >= 0.0 && y_coordinate <= 0.8) {
+            constexpr auto rho = 0.1380;
+            constexpr auto u = 1.206;
+            constexpr auto v = 1.206;
+            constexpr auto p = 0.029;
+
+            constexpr auto rhou = rho * u;
+            constexpr auto rhov = rho * v;
+            constexpr auto rhoE = p * c + 0.5 * (rhou * u + rhov * v);
+
+            return { rho, rhou, rhov, rhoE };
+        }
+
+        else {
+            constexpr auto rho = 0.5323;
+            constexpr auto u = 1.206;
+            constexpr auto v = 0.0;
+            constexpr auto p = 0.3;
+
+            const auto rhou = rho * u;
+            const auto rhov = rho * v;
+            const auto rhoE = p * c + 0.5 * (rhou * u + rhov * v);
+
+            return { rho, rhou, rhov, rhoE };
+        }
+    }
+
+    else {
+        throw std::runtime_error("not supported space dimension");
+        return {};
+    }
+}
+template <ushort space_dimension_>
+std::vector<typename Riemann_Problem<space_dimension_>::Solution_> Riemann_Problem<space_dimension_>::calculate_solutions(const std::vector<Space_Vector_>& cell_centers) {
+    const auto num_cell = cell_centers.size();
+
+    std::vector<Solution_> solutions(num_cell);
+    for (size_t i = 0; i < num_cell; ++i)
+        solutions[i] = This_::calculate_solution(cell_centers[i]);
+
+    return solutions;
+}
+template <ushort space_dimension_>
+std::string Riemann_Problem<space_dimension_>::name(void) {
+    return "Riemann_Problem";
+};
+template <ushort space_dimension_>
+constexpr ushort Riemann_Problem<space_dimension_>::space_dimension(void) {
+    return space_dimension_;
+}
+
 //T1. Modified SOD
 template <ushort space_dimension_>
 Modified_SOD<space_dimension_>::Solution_ Modified_SOD<space_dimension_>::calculate_solution(const Space_Vector_& space_vector) {
@@ -1125,7 +1320,7 @@ std::vector<typename Modified_SOD<space_dimension_>::Solution_> Modified_SOD<spa
 }
 template <ushort space_dimension_>
 std::string Modified_SOD<space_dimension_>::name(void) {
-    return "Modified_SOD";
+    return "T1_Modified_SOD";
 };
 template <ushort space_dimension_>
 constexpr ushort Modified_SOD<space_dimension_>::space_dimension(void) {
@@ -1210,7 +1405,7 @@ std::vector<typename Supersonic_Expansion<space_dimension_>::Solution_> Superson
 }
 template <ushort space_dimension_>
 std::string Supersonic_Expansion<space_dimension_>::name(void) {
-    return "Supersonic_Expansion";
+    return "T2_Supersonic_Expansion";
 };
 template <ushort space_dimension_>
 constexpr ushort Supersonic_Expansion<space_dimension_>::space_dimension(void) {
@@ -1299,7 +1494,7 @@ std::vector<typename Blast_Wave_Problem<space_dimension_>::Solution_> Blast_Wave
 }
 template <ushort space_dimension_>
 std::string Blast_Wave_Problem<space_dimension_>::name(void) {
-    return "Blast_Wave_Problem";
+    return "T3_Blast_Wave_Problem";
 };
 template <ushort space_dimension_>
 constexpr ushort Blast_Wave_Problem<space_dimension_>::space_dimension(void) {
@@ -1388,7 +1583,7 @@ std::vector<typename Double_Strong_Shock_Problem<space_dimension_>::Solution_> D
 }
 template <ushort space_dimension_>
 std::string Double_Strong_Shock_Problem<space_dimension_>::name(void) {
-    return "Double_Strong_Shock_Problem";
+    return "T4_Double_Strong_Shock_Problem";
 };
 template <ushort space_dimension_>
 constexpr ushort Double_Strong_Shock_Problem<space_dimension_>::space_dimension(void) {
@@ -1477,7 +1672,7 @@ std::vector<typename Slowly_Moving_Contact_Problem<space_dimension_>::Solution_>
 }
 template <ushort space_dimension_>
 std::string Slowly_Moving_Contact_Problem<space_dimension_>::name(void) {
-    return "Slowly_Moving_Contact_Problem";
+    return "T5_Slowly_Moving_Contact_Problem";
 };
 template <ushort space_dimension_>
 constexpr ushort Slowly_Moving_Contact_Problem<space_dimension_>::space_dimension(void) {

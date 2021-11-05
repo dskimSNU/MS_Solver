@@ -1016,6 +1016,9 @@ std::vector<std::vector<size_t>> Grid<space_dimension>::set_of_face_share_cell_i
 			this_face_share_cell_indexes.erase(my_index_pos_iter);
 			dynamic_require(this_face_share_cell_indexes.size() <= 1, "face share cell should be unique or absent");
 
+			if (this_face_share_cell_indexes.size() == 0) //periodic bdry가 아닌 경우 고려해야함.
+				continue;
+
 			face_share_cell_indexes.push_back(this_face_share_cell_indexes.front());//need to fix
 		}
 

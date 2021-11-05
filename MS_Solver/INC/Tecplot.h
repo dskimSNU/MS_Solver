@@ -55,12 +55,9 @@ public:
 public:
 	template <typename T>
 	static void record_cell_variables(const std::string& data_name, const std::vector<T>& cell_datas);
-
-	static void record_cell_indexes(void);
-
 	template <typename T>
 	static void conditionally_record_cell_variables(const std::string& data_name, const std::vector<T>& cell_datas);
-
+	static void record_cell_indexes(void);
 	static void conditionally_record_cell_indexes(void);
 
 public:
@@ -73,7 +70,6 @@ public:
 public: //for FVM
 	template <ushort num_equation>	
 	static void post_solution(const std::vector<Euclidean_Vector<num_equation>>& solutions, const std::string& comment = "");
-
 	template <ushort num_equation>
 	static void conditionally_post_solution(const std::vector<Euclidean_Vector<num_equation>>& solutions, const std::string& comment = "");
 
@@ -83,7 +79,6 @@ public:	//for HOM
 
 	template <ushort num_equation, ushort num_basis>
 	static void post_solution(const std::vector<Matrix<num_equation, num_basis>>& solution_coefficients, const std::string& comment = "");
-
 	template <ushort num_equation, ushort num_basis>
 	static void conditionally_post_solution(const std::vector<Matrix<num_equation, num_basis>>& solution_coefficients, const std::string& comment = "");
 
@@ -91,7 +86,6 @@ private:
 	static void write_ASCII_header(const Post_File_Type file_type, const std::string_view post_file_path);
 	static void write_ASCII_grid_post_file(const std::vector<std::vector<double>>& post_coordinate_blocks, const std::vector<std::vector<int>>& connectivities);
 	static void write_ASCII_solution_post_file(const std::vector<std::vector<double>>& post_solution_datas, const std::string& comment = "");
-
 
 	static void write_binary_header(const Post_File_Type file_type, const std::string_view post_file_path);
 	static void write_binary_grid_post_file(const std::vector<std::vector<double>>& post_coordinate_blocks, const std::vector<std::vector<int>>& connectivities);
@@ -109,9 +103,16 @@ private:
 	static std::vector<T> convert_cell_data_to_post_point_data(const std::vector<T>& cell_datas);
 };
 
+
+
+
 namespace ms {
 	std::string to_string(const Zone_Type zone_type);
 }
+
+
+
+
 
 //template definition part
 template <typename Governing_Equation>

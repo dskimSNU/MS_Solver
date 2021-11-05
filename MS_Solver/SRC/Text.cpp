@@ -78,6 +78,7 @@ std::ostream& operator<<(std::ostream& ostream, const Text& text) {
 	return ostream;
 }
 
+
 Binary_Writer::Binary_Writer(const std::string_view file_path) {
 	ms::make_path(file_path);
 	binary_file_stream_.open(file_path.data(), std::ios::binary);

@@ -15,6 +15,7 @@
 #define __CIRCLE_WAVE__					33
 #define __GAUSSIAN_WAVE__				34
 #define __BIG_SQUARE_WAVE__				35
+#define __BIG_SINE_WAVE__				36
 
 #define __MODIFIED_SOD__				300
 #define __SUPERSONIC_EXPANSION__		301		
@@ -27,6 +28,7 @@
 #define __BLAST_WAVE_INTERACTION__		312
 #define __SHU_OSHER__					313
 #define __EXPLOSION_PROBLEM__			314
+#define __RIEMANN_PROBLEM__				315
 
 
 

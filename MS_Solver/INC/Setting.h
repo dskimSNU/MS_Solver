@@ -4,7 +4,7 @@
 
 // ########################################## OPTION ##################################################################
 
-#define __DEFAULT_PATH__						"D:/CodeData/20211022/" + GOVERNING_EQUATION::name() + "/" + INITIAL_CONDITION::name() + "/" + SPATIAL_DISCRETE_METHOD::name() + "_" + RECONSTRUCTION_METHOD::name() + "/"
+#define __DEFAULT_PATH__						"D:/CodeData/Riemann_Problem_Test/" + GOVERNING_EQUATION::name() + "/" + INITIAL_CONDITION::name() + "/" + SPATIAL_DISCRETE_METHOD::name() + "_" + RECONSTRUCTION_METHOD::name() + "/"
 #define __DIMENSION__							2
 #define __GRID_FILE_TYPE__						__GMSH__
 #define __GRID_FILE_NAMES__						Shocktube_RQ_100x10
@@ -18,14 +18,14 @@
 #define __TIME_STEP_CONSTANT__					0.9
 #define __SOLVE_END_CONDITION__					__BY_TIME__
 #define __SOLVE_END_CONDITION_CONSTANT__		0.2
-#define __SOLVE_POST_CONDITION__				__BY_TIME__
-#define __SOLVE_POST_CONDITION_CONSTANT__		0.01
+#define __SOLVE_POST_CONDITION__				__BY_TIME__ 
+#define __SOLVE_POST_CONDITION_CONSTANT__		0.001
 #define __POST_ORDER__							0
 #define __POST_FILE_FORMAT__					__BINARY__
 
 // CONDITIONAL OPTIONS
 #if  __RECONSTRUCTION_METHOD__ == __ANN_RECONSTRUCTION__
-#define __ANN_MODEL__							linear_burgers_20211021
+#define __ANN_MODEL__							epoch_989
 #endif
 
 #if		__SPATIAL_DISCRETE_METHOD__ ==	__HOM__
@@ -37,10 +37,11 @@
 
 // AVAILABLE OPTIONS
 // __GRID_FILE_TYPE__				__GMSH__
-// __GOVERNING_EQUATION__			__LINEAR_ADVECTION__, __BURGERS__, __EULER__
-// __INITIAL_CONDITION__			__SQUARE_WAVE__, __SINE_WAVE__, __CIRCLE_WAVE__, __GAUSSIAN_WAVE__, __CONSTANT1__, __BIG_SQAURE_WAVE__
+// __GOVERNING_EQUATION__			__LINEAR_ADVECTION__, __BURGERS__, __EULER__, __SOLID_BODY_ROTATION__
+// __INITIAL_CONDITION__			__SQUARE_WAVE__, __SINE_WAVE__, __CIRCLE_WAVE__, __GAUSSIAN_WAVE__, __CONSTANT1__, __BIG_SQUARE_WAVE__, __BIG_SINE_WAVE__
 //									__MODIFIED_SOD__, __SUPERSONIC_EXPANSION__, __BLAST_WAVE_PROBLEM__, __DOUBLE_STRONG_SHOCK_PROBLEM__, __SLOWLY_MOVING_CONTACT__
-//									__SOD__, __HARTEN_LAX_PROBLEM__, __BLAST_WAVE_INTERACTION__, __SHU_OSHER__, __EXPLOSION_PROBLEM__
+//									__SOD__, __HARTEN_LAX_PROBLEM__, __BLAST_WAVE_INTERACTION__, __SHU_OSHER__
+//									__EXPLOSION_PROBLEM__, __RIEMANN_PROBLEM__
 // __SPATIAL_DISCRETE_METHOD__		__FVM__, __HOM__
 // __RECONSTRUCTION_METHOD__		__CONSTANT_RECONSTRUCTION__, __LINEAR_RECONSTRUCTION__,  __MLP_u1_RECONSTRUCTION__, __ANN_RECONSTRUCTION__
 //									__POLYNOMIAL_RECONSTRUCTION__, __hMLP_RECONSTRUCTION__, __hMLP_BD_RECONSTRUCTION__
@@ -53,9 +54,9 @@
 
 // Reference Constant
 // CFL		: Modified SOD(0.9), Supersonic Expansion(0.5), Blast-wave problem(0.6), Double strong shock problem(0.8), Slowly-moving contact(0.6)
-// 
+//			  Riemann problem(0.5)	
 // END TIME : Modified SOD(0.2), Supersonic Expansion(0.15), Blast-wave problem(0.012), Double strong shock problem(0.035), Slowly-moving contact(0.012)
-//			  SOD(0.2), Harten-Lax(0.13), Blast-wave interaction(0.038), Shu_Osher(0.178), Explosion_problem(0.25) 
+//			  SOD(0.2), Harten-Lax(0.13), Blast-wave interaction(0.038), Shu_Osher(0.178), Explosion_problem(0.25), Riemann problem (0.8)
 
 // ######################################### OPTION END ################################################################
 
@@ -67,8 +68,8 @@
 
 // Linear Advection
 #define X_ADVECTION_SPEED				1.0
-#define Y_ADVECTION_SPEED				0.5
-#define Z_ADVECTION_SPEED				1.0
+#define Y_ADVECTION_SPEED				0.0
+#define Z_ADVECTION_SPEED				0.0
 
 // Sine Wave
 #define X_WAVE_LENGTH					1.0
@@ -102,7 +103,7 @@
 #endif
 
 #define GRID_FILE_NAMES TO_STRING(__GRID_FILE_NAMES__)
-
+#define ANN_MODEL_NAMES TO_STRING(__ANN_MODEL__)
 
 #if		__GOVERNING_EQUATION__ == __LINEAR_ADVECTION__
 #define GOVERNING_EQUATION		Linear_Advection<__DIMENSION__>
@@ -131,6 +132,9 @@
 #endif
 #if		__INITIAL_CONDITION__ == __BIG_SQUARE_WAVE__
 #define INITIAL_CONDITION	Big_Square_Wave<__DIMENSION__>
+#endif
+#if		__INITIAL_CONDITION__ == __BIG_SINE_WAVE__
+#define INITIAL_CONDITION	Big_Sine_Wave<__DIMENSION__>
 #endif
 
 #if		__INITIAL_CONDITION__ == __MODIFIED_SOD__
@@ -163,7 +167,9 @@
 #if		__INITIAL_CONDITION__ == __EXPLOSION_PROBLEM__
 #define INITIAL_CONDITION	Explosion_Problem<__DIMENSION__>
 #endif 
-
+#if		__INITIAL_CONDITION__ == __RIEMANN_PROBLEM__
+#define INITIAL_CONDITION	Riemann_Problem<__DIMENSION__>
+#endif 
 #if		__SPATIAL_DISCRETE_METHOD__ == __FVM__
 #define SPATIAL_DISCRETE_METHOD	FVM
 #endif
@@ -189,8 +195,6 @@
 #define RECONSTRUCTION_METHOD Constant_Reconstruction 
 #endif
 #if		__RECONSTRUCTION_METHOD__ == __LINEAR_RECONSTRUCTION__
-
-
 #define RECONSTRUCTION_METHOD Linear_Reconstruction<GRADIENT_METHOD>
 #endif
 #if		__RECONSTRUCTION_METHOD__ == __MLP_u1_RECONSTRUCTION__

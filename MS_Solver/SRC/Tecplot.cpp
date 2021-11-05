@@ -8,12 +8,10 @@ void Tecplot::record_cell_indexes(void) {
 
 	This_::record_cell_variables("cell_index", cell_index);
 }
-
 void Tecplot::conditionally_record_cell_indexes(void) {
 	if (This_::post_condition_)
 		This_::record_cell_indexes();
 }
-
 
 void Tecplot::write_binary_header(const Post_File_Type file_type, const std::string_view post_file_path) {
 	static int strand_id = 0;
@@ -84,7 +82,6 @@ void Tecplot::write_binary_header(const Post_File_Type file_type, const std::str
 	post_file << 0 << 0 << 0 << 0;						//i,j,k cell dim, auxilarily name index pair, default
 	post_file << 357.0f;								//EOH_marker
 }
-
 void Tecplot::write_binary_grid_post_file(const std::vector<std::vector<double>>& post_coordinate_blocks, const std::vector<std::vector<int>>& connectivities) {
 	const auto grid_file_path = This_::path_ + "grid.plt";
 	This_::write_binary_header(Post_File_Type::grid, grid_file_path);
@@ -115,7 +112,6 @@ void Tecplot::write_binary_grid_post_file(const std::vector<std::vector<double>>
 	for (const auto& connectivity : connectivities)
 		grid_binary_file << connectivity;			//connectivity
 }
-
 void Tecplot::write_binary_solution_post_file(const std::vector<std::vector<double>>& post_solution_binary_datas, const std::string& comment) {
 	static size_t count = 1;
 
@@ -160,27 +156,6 @@ void Tecplot::write_binary_solution_post_file(const std::vector<std::vector<doub
 	}
 }
 
-void Tecplot::reset(void) {
-	This_::post_condition_ = false;
-	This_::path_.clear();
-	This_::post_order_ = 0;
-	This_::grid_variables_str_.clear();
-	This_::solution_variables_str_.clear();
-	This_::num_element_ = 0;
-	This_::num_node_ = 0;
-	This_::time_ptr_ = nullptr;
-	This_::num_post_points_.clear();
-	This_::set_of_basis_post_points_.clear();
-}
-
-std::vector<int> Tecplot::convert_to_binary_data(const std::string& str) {
-	std::vector<int> tecplot_binary_format;
-	tecplot_binary_format.insert(tecplot_binary_format.end(), str.begin(), str.end());
-	tecplot_binary_format.push_back(0); // null
-	return tecplot_binary_format;
-}
-
-
 void Tecplot::write_ASCII_header(const Post_File_Type file_type, const std::string_view post_file_path) {
 	static size_t strand_id = 0;
 
@@ -220,7 +195,6 @@ void Tecplot::write_ASCII_header(const Post_File_Type file_type, const std::stri
 
 	header.write(post_file_path);
 }
-
 void Tecplot::write_ASCII_grid_post_file(const std::vector<std::vector<double>>& post_coordinate_blocks, const std::vector<std::vector<int>>& connectivities) {
 	ushort str_per_line = 0;
 
@@ -254,7 +228,6 @@ void Tecplot::write_ASCII_grid_post_file(const std::vector<std::vector<double>>&
 	This_::write_ASCII_header(Post_File_Type::grid, grid_file_path);
 	grid_post_data_text.add_write(grid_file_path);
 }
-
 void Tecplot::write_ASCII_solution_post_file(const std::vector<std::vector<double>>& set_of_post_solution_datas, const std::string& comment) {
 	//convert data to ASCII text
 	size_t str_per_line = 1;
@@ -297,6 +270,25 @@ void Tecplot::write_ASCII_solution_post_file(const std::vector<std::vector<doubl
 	}
 }
 
+
+void Tecplot::reset(void) {
+	This_::post_condition_ = false;
+	This_::path_.clear();
+	This_::post_order_ = 0;
+	This_::grid_variables_str_.clear();
+	This_::solution_variables_str_.clear();
+	This_::num_element_ = 0;
+	This_::num_node_ = 0;
+	This_::time_ptr_ = nullptr;
+	This_::num_post_points_.clear();
+	This_::set_of_basis_post_points_.clear();
+}
+std::vector<int> Tecplot::convert_to_binary_data(const std::string& str) {
+	std::vector<int> tecplot_binary_format;
+	tecplot_binary_format.insert(tecplot_binary_format.end(), str.begin(), str.end());
+	tecplot_binary_format.push_back(0); // null
+	return tecplot_binary_format;
+}
 
 namespace ms {
 	std::string to_string(const Zone_Type zone_type) {

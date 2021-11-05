@@ -213,6 +213,8 @@ auto Euler<space_dimension_>::physical_flux(const Solution_& conservative_variab
         const auto v = primitivie_variable.at(1);
         const auto p = primitivie_variable.at(2);
         const auto a = primitivie_variable.at(3);
+
+
         const auto rhouv = rhou * v;
 
         dynamic_require(rho >= 0 && p >= 0, "density and pressure shold be positive");

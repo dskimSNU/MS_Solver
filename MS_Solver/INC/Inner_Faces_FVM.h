@@ -117,13 +117,13 @@ void Inner_Faces_FVM_Linear<Reconstruction_Method, Numerical_Flux_Function>::cal
         Solution_ oc_solution, nc_solution;
         //For 2D SCL
         if constexpr (Solution_::dimension() == 1) {
-            oc_solution = solutions[oc_index]; //conservative variables
+            oc_solution = solutions[oc_index];                //conservative variables
             nc_solution = solutions[nc_index];
         }
 
         //For 2D Euler
         else if constexpr (Solution_::dimension() == 4) {
-            oc_solution = primitive_variables[oc_index]; //primitive varialbes
+            oc_solution = primitive_variables[oc_index];    //primitive varialbes
             nc_solution = primitive_variables[nc_index];
             //oc_solution = characteristic_variables[oc_index]; //characteristic variables
             //nc_solution = characteristic_variables[nc_index];
@@ -139,10 +139,10 @@ void Inner_Faces_FVM_Linear<Reconstruction_Method, Numerical_Flux_Function>::cal
         const auto& inner_face_normal = this->normals_[i];
 
         if constexpr (Solution_::dimension() == 4) {
-            oc_side_solution = ds::primitive_to_conservative(oc_side_solution); //primitve to conservative
+            oc_side_solution = ds::primitive_to_conservative(oc_side_solution); 
             nc_side_solution = ds::primitive_to_conservative(nc_side_solution);
-            //oc_side_solution = K_matrices.at(oc_index) * oc_side_solution; //characteristic to conservative
-            //nc_side_solution = K_matrices.at(nc_index) * nc_side_solution; 
+            //oc_side_solution = ds::characteristic_to_conservative(K_matrices[oc_index], oc_side_solution);
+            //nc_side_solution = ds::characteristic_to_conservative(K_matrices[nc_index], nc_side_solution);
         }
 
         const auto numerical_flux = Numerical_Flux_Function::calculate(oc_side_solution, nc_side_solution, inner_face_normal);
@@ -150,21 +150,35 @@ void Inner_Faces_FVM_Linear<Reconstruction_Method, Numerical_Flux_Function>::cal
         RHS[oc_index] -= delta_RHS;
         RHS[nc_index] += delta_RHS;
 
-        //try {
-        //    const auto numerical_flux = Numerical_Flux_Function::calculate(oc_side_solution, nc_side_solution, inner_face_normal);
-        //    const auto delta_RHS = this->volumes_[i] * numerical_flux;
-        //    RHS[oc_index] -= delta_RHS;
-        //    RHS[nc_index] += delta_RHS;
-        //}
-        //catch (std::exception& except) {
-        //    const auto numerical_flux = Numerical_Flux_Function::calculate(oc_solution, nc_solution, inner_face_normal);
-        //    const auto delta_RHS = this->volumes_[i] * numerical_flux;
-        //    RHS[oc_index] -= delta_RHS;
-        //    RHS[nc_index] += delta_RHS;
+    //    try {
+    //        const auto numerical_flux = Numerical_Flux_Function::calculate(oc_side_solution, nc_side_solution, inner_face_normal);
+    //        const auto delta_RHS = this->volumes_[i] * numerical_flux;
+    //        RHS[oc_index] -= delta_RHS;
+    //        RHS[nc_index] += delta_RHS;
+    //    }
+    //    catch (std::exception& except) {
+    //        //수정 필요
+    //        oc_solution = ds::primitive_to_conservative(oc_solution);
+    //        nc_solution = ds::primitive_to_conservative(nc_solution);
+    //        const auto numerical_flux = Numerical_Flux_Function::calculate(oc_solution, nc_solution, inner_face_normal);
+    //        const auto delta_RHS = this->volumes_[i] * numerical_flux;
+    //        RHS[oc_index] -= delta_RHS;
+    //        RHS[nc_index] += delta_RHS;
 
-        //    Log::content_ << except.what() << "\n";
-        //    Log::content_ << "oc_index " << oc_index << "\n";
-        //    Log::content_ << "nc_index " << nc_index << "\n";
-        //}
+    //        Log::content_ << except.what() << "\n";
+    //        Log::content_ << "oc_index " << oc_index << "\n";
+    //        Log::content_ << "nc_index " << nc_index << "\n";
+    //    }
     }
 }
+
+//void Inner_Faces_FVM_Linear<Reconstruction_Method, Numerical_Flux_Function>::calculate_RHS(std::vector<Residual_>& RHS, const Solution& reconstructed_solution) const {    
+//const auto num_inner_face = this->normals_.size();
+//for (size_t i = 0; i < num_inner_face; ++i) {
+//  //const auto [oc_side_Solution, nc_side_solution] = solution.cal_inner_face_solution(i);
+    //const auto numerical_flux = Numerical_Flux_Function::calculate(oc_side_solution, nc_side_solution, inner_face_normal);
+    //const auto delta_RHS = this->volumes_[i] * numerical_flux;
+    //RHS[oc_index] -= delta_RHS;
+    //RHS[nc_index] += delta_RHS;
+    // }
+//}
